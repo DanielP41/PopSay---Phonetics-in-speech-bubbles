@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PopSay — Ajustes</title>
+  <link rel="stylesheet" href="../shared/ui.css">
+</head>
+<body class="page">
+  <main class="wrap">
+    <header class="hero">
+      <img src="../icons/icon48.png" alt="" width="40" height="40">
+      <div>
+        <h1>PopSay</h1>
+        <p class="muted">Seleccioná texto en inglés y escuchá cómo se pronuncia.</p>
+      </div>
+    </header>
+
+    <form id="form" autocomplete="off">
+      <section class="card">
+        <h2>Voz</h2>
+        <div class="field">
+          <span class="label" id="accent-l">Acento por defecto</span>
+          <div class="seg" role="radiogroup" aria-labelledby="accent-l">
+            <label><input type="radio" name="accent" value="en-US"> Inglés de EE. UU.</label>
+            <label><input type="radio" name="accent" value="en-GB"> Inglés británico</label>
+          </div>
+        </div>
+        <div class="field">
+          <span class="label" id="rate-l">Velocidad</span>
+          <div class="seg" role="radiogroup" aria-labelledby="rate-l">
+            <label><input type="radio" name="rate" value="0.6"> Lento</label>
+            <label><input type="radio" name="rate" value="0.8"> 0.8×</label>
+            <label><input type="radio" name="rate" value="1"> 1×</label>
+            <label><input type="radio" name="rate" value="1.2"> 1.2×</label>
+          </div>
+        </div>
+        <div class="field">
+          <span class="label" id="engine-l">Motor</span>
+          <div class="seg col" role="radiogroup" aria-labelledby="engine-l">
+            <label><input type="radio" name="engine" value="local"> Voz incluida (Kokoro, neuronal, funciona sin internet)</label>
+            <label><input type="radio" name="engine" value="system"> Voces del sistema / navegador</label>
+            <label><input type="radio" name="engine" value="neural"> Mi backend (opcional)</label>
+          </div>
+          <p class="hint">La voz incluida corre dentro del navegador: la primera vez tarda unos segundos en cargar.</p>
+        </div>
+        <div class="grid2" id="local-voices">
+          <div class="field">
+            <label class="label" for="kokoroUS">Voz incluida (EE. UU.)</label>
+            <select id="kokoroUS" name="kokoroUS"></select>
+          </div>
+          <div class="field">
+            <label class="label" for="kokoroGB">Voz incluida (Reino Unido)</label>
+            <select id="kokoroGB" name="kokoroGB"></select>
+          </div>
+        </div>
+        <div class="grid2" id="system-voices">
+          <div class="field">
+            <label class="label" for="voiceUS">Voz del sistema (EE. UU.)</label>
+            <select id="voiceUS" name="voiceUS"></select>
+          </div>
+          <div class="field">
+            <label class="label" for="voiceGB">Voz del sistema (Reino Unido)</label>
+            <select id="voiceGB" name="voiceGB"></select>
+          </div>
+        </div>
+        <div class="row">
+          <input id="sample" type="text" value="The quick brown fox jumps over the lazy dog." aria-label="Frase de prueba">
+          <button type="button" id="play-sample" class="btn">Probar voz</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Backend propio (opcional)</h2>
+        <div class="field">
+          <label class="label" for="backendUrl">URL del backend</label>
+          <input id="backendUrl" name="backendUrl" type="url" placeholder="http://localhost:8000">
+        </div>
+        <div class="field">
+          <label class="label" for="apiToken">API key del backend (opcional)</label>
+          <input id="apiToken" name="apiToken" type="password" placeholder="Valor de API_TOKEN en el .env">
+        </div>
+        <div class="row">
+          <button type="button" id="grant" class="btn">Conceder acceso y probar</button>
+          <span id="backend-status" class="muted" role="status"></span>
+        </div>
+        <p class="hint">No hace falta: la voz y el IPA ya vienen incluidos. Sirve si querés usar voces de Azure, OpenAI o ElevenLabs desde tu propio servidor.</p>
+      </section>
+
+      <section class="card">
+        <h2>Comportamiento</h2>
+        <div class="field">
+          <span class="label" id="trigger-l">Cuándo aparece la burbuja</span>
+          <div class="seg col" role="radiogroup" aria-labelledby="trigger-l">
+            <label><input type="radio" name="triggerMode" value="auto"> Apenas selecciono texto</label>
+            <label><input type="radio" name="triggerMode" value="icon"> Primero un ícono chico; la burbuja al hacer clic</label>
+            <label><input type="radio" name="triggerMode" value="shortcut"> Sólo con el atajo o el menú contextual</label>
+          </div>
+          <p class="hint">Atajo: <kbd id="shortcut">Alt+Shift+P</kbd> · <a href="#" id="shortcuts-link">cambiarlo</a></p>
+        </div>
+        <div class="checks">
+          <label><input type="checkbox" name="autoPlay"> Reproducir automáticamente al abrir</label>
+          <label><input type="checkbox" name="showIpa"> Mostrar transcripción IPA</label>
+          <label><input type="checkbox" name="onlyEnglish"> Ignorar texto que no parece inglés</label>
+          <label><input type="checkbox" name="skipEditable"> No activarse en campos de texto y editores</label>
+        </div>
+        <div class="grid2">
+          <div class="field">
+            <label class="label" for="maxChars">Largo máximo (caracteres)</label>
+            <input id="maxChars" name="maxChars" type="number" min="20" max="2000" step="10">
+          </div>
+          <div class="field">
+            <label class="label" for="theme">Tema</label>
+            <select id="theme" name="theme">
+              <option value="auto">Según la página</option>
+              <option value="dark">Oscuro</option>
+              <option value="light">Claro</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label class="label" for="disabledSites">Sitios desactivados (uno por línea)</label>
+          <textarea id="disabledSites" name="disabledSites" rows="4" placeholder="docs.google.com&#10;mail.google.com"></textarea>
+        </div>
+      </section>
+    </form>
+
+    <p id="saved" class="saved" role="status" aria-live="polite"></p>
+  </main>
+  <script src="../src/lib/text.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

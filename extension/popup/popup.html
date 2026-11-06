@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>PopSay</title>
+  <link rel="stylesheet" href="../shared/ui.css">
+</head>
+<body class="popup">
+  <header class="hero">
+    <img src="../icons/icon32.png" alt="" width="28" height="28">
+    <div>
+      <h1>PopSay</h1>
+      <p class="muted" id="engine-line">—</p>
+    </div>
+  </header>
+
+  <section class="card">
+    <div class="field">
+      <span class="label" id="accent-l">Acento</span>
+      <div class="seg" role="radiogroup" aria-labelledby="accent-l">
+        <label><input type="radio" name="accent" value="en-US"> US</label>
+        <label><input type="radio" name="accent" value="en-GB"> UK</label>
+      </div>
+    </div>
+    <div class="checks" style="margin: 0">
+      <label><input type="checkbox" id="site-toggle"> <span>Activa en <strong id="host">este sitio</strong></span></label>
+    </div>
+    <p class="hint" id="site-hint"></p>
+  </section>
+
+  <section class="card">
+    <div class="row">
+      <input id="quick" type="text" placeholder="Escribí algo en inglés…" aria-label="Texto para escuchar">
+      <button class="btn" id="speak" type="button">Escuchar</button>
+    </div>
+    <p class="hint">Atajo: <kbd id="shortcut">Alt+Shift+P</kbd> sobre una selección, o clic derecho › Pronunciar.</p>
+  </section>
+
+  <div class="row">
+    <button class="btn secondary" id="options" type="button">Ajustes</button>
+  </div>
+  <script src="../src/lib/text.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

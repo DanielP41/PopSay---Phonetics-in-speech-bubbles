@@ -1,0 +1,5 @@
+-r requirements.txt
+pytest>=8
+# Opcional: IPA para palabras fuera de CMUdict (nombres propios, jerga).
+# g2p_en descarga datos de NLTK la primera vez que se importa.
+# g2p_en>=2.1

@@ -1,0 +1,63 @@
+name: Build
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  windows-portable:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Dependencias de armado
+        run: pip install numpy cmudict kokoro-onnx ziglang pydantic-settings fastapi httpx
+
+      - name: Núcleo (modelo, voces, IPA)
+        run: python tools/build_core.py
+
+      - name: Armar carpeta portable
+        run: python tools/build_portable_windows.py
+
+      - name: Autodiagnóstico con el Python incluido (Windows real)
+        env:
+          QT_QPA_PLATFORM: offscreen
+          PYTHONIOENCODING: utf-8
+        working-directory: dist/PopSay/app
+        # El runner no tiene placa de sonido: ese único chequeo puede fallar.
+        run: |
+          ..\runtime\python.exe -E -s -X utf8 -m popsay.selftest
+          ..\runtime\python.exe -E -s -X utf8 -c "from popsay.engine import Engine; e=Engine(); e.start().result(); s=e.synthesize('Hello world.','af_heart','en-US',1.0).result(); assert s.duration > 0.5; print('voz OK', round(s.duration,2))"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PopSay-windows-portable
+          path: dist/PopSay/
+          retention-days: 30
+
+  extension:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: pip install numpy cmudict kokoro-onnx
+      - run: python tools/build_core.py
+      - working-directory: extension
+        run: |
+          npm ci
+          npm run build
+          npm test
+      - run: python tools/build_zip.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: popsay-extension
+          path: dist/popsay-extension-*.zip

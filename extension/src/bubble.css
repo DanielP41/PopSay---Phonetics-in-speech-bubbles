@@ -1,0 +1,272 @@
+/* PopSay — estilos de la burbuja (viven dentro del Shadow DOM). */
+
+:host { all: initial; }
+
+.fb-card,
+.fb-trigger {
+  --bg: #2a2a2a;
+  --panel: #222222;
+  --line: #3a3a3a;
+  --line-strong: #4a4a4a;
+  --text: #ececec;
+  --muted: #a8a8a8;
+  --accent: #0b6fd8;
+  --accent-ink: #ffffff;
+  --accent-soft: #0d3f8f;
+  --accent-line: #2f6fd6;
+  --bar: #555555;
+  --bar-lit: #5aa0ff;
+  --shadow: 0 18px 48px rgba(0, 0, 0, 0.5);
+  font: 400 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--text);
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+}
+
+.fb-card[data-theme="light"],
+.fb-trigger[data-theme="light"] {
+  --bg: #ffffff;
+  --panel: #f5f6f8;
+  --line: #e1e3e8;
+  --line-strong: #c9ccd3;
+  --text: #1b1d21;
+  --muted: #5d6270;
+  --accent: #0b63c4;
+  --accent-soft: #e5efff;
+  --accent-line: #0b63c4;
+  --bar: #c9ccd3;
+  --bar-lit: #0b63c4;
+  --shadow: 0 16px 40px rgba(20, 24, 40, 0.18);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+button {
+  font: inherit;
+  color: inherit;
+  margin: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+button:focus-visible {
+  outline: 2px solid var(--bar-lit);
+  outline-offset: 2px;
+}
+svg { width: 18px; height: 18px; display: block; flex: none; }
+
+.fb-trigger {
+  position: fixed;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--line-strong);
+  background: var(--bg);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  animation: fb-pop 0.14s ease-out;
+}
+.fb-trigger:hover { background: var(--accent); color: var(--accent-ink); }
+
+.fb-card {
+  position: fixed;
+  width: 380px;
+  max-width: calc(100vw - 16px);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: fb-pop 0.14s ease-out;
+}
+
+.fb-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.fb-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--muted);
+  margin-right: auto;
+}
+.fb-brand-icon { color: var(--accent); }
+.fb-brand-icon svg { width: 16px; height: 16px; }
+.fb-head-actions { display: flex; gap: 2px; }
+
+.fb-icon {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.fb-icon:hover { background: var(--panel); color: var(--text); }
+
+.fb-seg { display: flex; gap: 4px; }
+.fb-pill {
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.fb-pill:hover { border-color: var(--accent-line); }
+.fb-pill[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  color: var(--text);
+}
+.fb-card[data-theme="dark"] .fb-pill[aria-pressed="true"] { color: #ffffff; }
+.fb-icon-pill svg { width: 16px; height: 16px; }
+
+.fb-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.fb-text {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 4px;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.4;
+  max-height: 140px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.fb-text { position: relative; scrollbar-width: thin; }
+
+.fb-grip {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  opacity: 0.85;
+  cursor: nwse-resize;
+  touch-action: none;
+  user-select: none;
+}
+.fb-grip:hover { opacity: 1; color: var(--text); }
+.fb-grip svg { width: 11px; height: 11px; }
+
+.fb-word {
+  padding: 0 3px;
+  border-radius: 4px;
+  transition: background-color 0.1s, color 0.1s;
+}
+.fb-card[data-state="playing"] .fb-word { color: var(--muted); }
+.fb-card[data-state="playing"] .fb-word.is-done { color: var(--text); }
+.fb-card[data-state="playing"] .fb-word.is-active {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.fb-ipa-row { display: flex; align-items: center; gap: 4px; }
+.fb-card[data-show-ipa="false"] .fb-ipa-row { display: none; }
+.fb-ipa {
+  flex: 1;
+  font: 400 13px/1.4 "Cascadia Mono", "Consolas", "SFMono-Regular", Menlo, monospace;
+  color: var(--text);
+  word-break: break-word;
+}
+.fb-ipa.is-muted { color: var(--muted); font-family: inherit; }
+.fb-ipa-row .fb-icon { width: 30px; height: 30px; }
+.fb-ipa-row .fb-icon svg { width: 15px; height: 15px; }
+
+.fb-player { display: flex; align-items: center; gap: 12px; }
+.fb-play {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 50%;
+  border: 0;
+  background: var(--accent);
+  color: var(--accent-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.fb-play:hover { filter: brightness(1.1); }
+.fb-play svg { width: 20px; height: 20px; }
+.spin { animation: fb-spin 0.8s linear infinite; }
+
+.fb-wave {
+  flex: 1;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.fb-bar {
+  flex: 1;
+  height: var(--h);
+  border-radius: 2px;
+  background: var(--bar);
+  transform-origin: center;
+  transition: background-color 0.12s;
+}
+.fb-bar.is-lit { background: var(--bar-lit); }
+.fb-card[data-state="playing"] .fb-bar {
+  animation: fb-pulse 0.7s ease-in-out infinite;
+  animation-delay: var(--d);
+}
+
+.fb-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.fb-notice {
+  display: none;
+  font-size: 12px;
+  color: var(--muted);
+}
+.fb-card.has-notice .fb-notice { display: block; }
+
+@keyframes fb-pulse {
+  0%, 100% { transform: scaleY(0.55); }
+  50% { transform: scaleY(1); }
+}
+@keyframes fb-spin { to { transform: rotate(360deg); } }
+@keyframes fb-pop {
+  from { opacity: 0; transform: translateY(4px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fb-card, .fb-trigger { animation: none; }
+  .fb-card[data-state="playing"] .fb-bar { animation: none; }
+  .spin { animation-duration: 2s; }
+}

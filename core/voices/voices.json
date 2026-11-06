@@ -1,0 +1,42 @@
+[
+ {
+  "id": "af_heart",
+  "accent": "en-US",
+  "label": "Heart (mujer)"
+ },
+ {
+  "id": "am_michael",
+  "accent": "en-US",
+  "label": "Michael (hombre)"
+ },
+ {
+  "id": "af_bella",
+  "accent": "en-US",
+  "label": "Bella (mujer)"
+ },
+ {
+  "id": "am_fenrir",
+  "accent": "en-US",
+  "label": "Fenrir (hombre)"
+ },
+ {
+  "id": "bf_emma",
+  "accent": "en-GB",
+  "label": "Emma (mujer)"
+ },
+ {
+  "id": "bm_george",
+  "accent": "en-GB",
+  "label": "George (hombre)"
+ },
+ {
+  "id": "bf_isabella",
+  "accent": "en-GB",
+  "label": "Isabella (mujer)"
+ },
+ {
+  "id": "bm_fable",
+  "accent": "en-GB",
+  "label": "Fable (hombre)"
+ }
+]

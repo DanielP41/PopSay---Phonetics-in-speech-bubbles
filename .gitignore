@@ -1,0 +1,12 @@
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+dist/
+tools/smoke*.png
+node_modules/
+data/
+core/models/
+extension/models/
+extension/vendor/
+extension/src/engine/kokoro-worker.js

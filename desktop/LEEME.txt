@@ -1,0 +1,56 @@
+POPSAY — pronunciación de inglés, 100 % offline
+==========================================================
+
+CÓMO USARLA
+1. Descomprimí la carpeta donde quieras (disco, pendrive, escritorio).
+   No hace falta instalar nada ni tener internet.
+2. Abrí PopSay.exe. Aparece un ícono azul en la bandeja,
+   junto al reloj (puede estar dentro de la flechita ^).
+   La primera vez tarda unos segundos en cargar la voz.
+3. Seleccioná texto en inglés en CUALQUIER programa (navegador, Word,
+   PDF, Telegram, etc.) y:
+     - presioná  Alt + Shift + P , o
+     - tocá el iconito azul que aparece junto al mouse.
+4. Se abre la burbuja: suena la pronunciación, se resalta cada
+   palabra junto con su transcripción IPA. Podés cambiar acento US/UK,
+   velocidad, y repetir en bucle.
+
+SEGUIR LA PRONUNCIACIÓN
+- Mientras suena, se resalta la palabra y, dentro de ella, la sílaba
+  que se está pronunciando, en el texto y en el IPA a la par.
+
+MOVER Y AGRANDAR LA BURBUJA
+- Arrastrala desde la barra de arriba (donde dice "PopSay").
+- Arrastrá los puntitos de la esquina inferior derecha para hacerla
+  más ancha o con más lugar para el texto. Se recuerda para la próxima.
+- Doble clic en los puntitos: vuelve al tamaño automático.
+
+MÁS OPCIONES (clic derecho en el ícono de la bandeja)
+- Pronunciar portapapeles / Escribir un texto.
+- Voz: 4 americanas y 4 británicas.
+- Tema, IPA, reproducir al abrir, ícono al seleccionar con el mouse.
+- Iniciar con Windows (guarda la ubicación actual de la carpeta:
+  si la movés, desactivalo y volvelo a activar).
+Clic izquierdo en el ícono de la bandeja = pronunciar el portapapeles.
+
+NOTAS
+- En terminales (CMD, PowerShell) Ctrl+C corta el programa, así que
+  ahí la app no copia sola: copiá vos el texto y usá
+  "Pronunciar portapapeles".
+- Para leer la selección la app usa el portapapeles un instante y
+  después lo restaura si tenía texto. Si tenía una imagen o formato
+  enriquecido, queda el texto seleccionado.
+- Lo que ya escuchaste queda guardado en data\cache y la próxima
+  vez suena al instante. Podés borrar esa carpeta cuando quieras.
+- Ajustes avanzados (atajo, largo máximo, apps ignoradas):
+  data\settings.json. Cerrá la app antes de editarlo.
+- Si algo falla, abrí Diagnostico.bat: muestra el error.
+  También queda registrado en data\log.txt.
+- Windows puede mostrar "Windows protegió su PC" la primera vez
+  porque el .exe no está firmado: "Más información" > "Ejecutar de
+  todas formas".
+
+CRÉDITOS
+- Voz: Kokoro-82M (Apache 2.0), modelo ONNX de thewh1teagle/kokoro-onnx.
+- Fonemas: espeak-ng (GPL-3.0). IPA: CMU Pronouncing Dictionary.
+- Interfaz: Qt for Python / PySide6 (LGPL-3.0). ONNX Runtime (MIT).
