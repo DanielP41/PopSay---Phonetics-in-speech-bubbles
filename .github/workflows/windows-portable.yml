@@ -36,7 +36,8 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: PopSay-windows-portable
-          path: dist/PopSay/
+          path: dist/PopSay-windows-portable.zip
+          compression-level: 0
           retention-days: 30
 
   extension:
@@ -61,3 +62,37 @@ jobs:
         with:
           name: popsay-extension
           path: dist/popsay-extension-*.zip
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows-portable, extension]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: assets
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: PopSay ${{ github.ref_name }}
+          files: assets/*.zip
+          body: |
+            ## Descargas
+
+            **🪟 App portable de Windows: `PopSay-windows-portable.zip`**
+            Funciona en cualquier programa (Word, PDF, Telegram, navegador…) y sin internet.
+            1. Descomprimí el zip donde quieras (sirve desde un pendrive).
+            2. Abrí `PopSay.exe`: aparece un ícono azul en la bandeja del sistema.
+            3. Seleccioná texto en inglés y presioná **Alt+Shift+P**, o tocá el iconito azul que aparece junto al mouse.
+
+            Si Windows muestra un aviso de SmartScreen: **Más información → Ejecutar de todas formas**.
+
+            **🧩 Extensión de Chrome / Edge: `popsay-extension-*.zip`**
+            1. Descomprimí el zip en una carpeta fija.
+            2. Abrí `chrome://extensions` (o `edge://extensions`) y activá el **Modo de desarrollador**.
+            3. **Cargar descomprimida** → elegí la carpeta donde está `manifest.json`.
+
+            ## Qué hace
+            Seleccionás texto en inglés y una burbuja lo pronuncia con voz neuronal (Kokoro-82M), muestra el IPA y resalta palabra y sílaba mientras suena. Acento US o UK, velocidad y repetición en bucle. Todo corre en tu compu: ningún texto sale a internet.
