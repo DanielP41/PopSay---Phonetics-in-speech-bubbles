@@ -2,7 +2,7 @@
 
 Seleccionás texto en inglés y aparece una **burbuja flotante que lo pronuncia**, con transcripción IPA, resaltado sílaba por sílaba, acento americano o británico, velocidad y repetición en bucle.
 
-[![Demo de PopSay: la burbuja pronuncia la frase seleccionada y resalta cada sílaba en el texto y en el IPA](docs/popsay-demo.jpg)](docs/popsay-demo.mp4)
+https://github.com/user-attachments/assets/f5d2dcbc-3c24-4547-92e5-b4ae764d36b0
 
 ▶️ **[Ver la demo (1:28)](docs/popsay-demo.mp4)** · 📦 **[Descargar](https://github.com/DanielP41/PopSay---Phonetics-in-speech-bubbles/releases)** la app portable de Windows o la extensión
 
