@@ -95,10 +95,14 @@ python tools/smoke_e2e.py /ruta/a/chrome                   # extensión con la R
 
 ## Cómo funciona el motor
 
-```
-texto ─► espeak-ng (WASM / DLL) ─► fonemas IPA ─► ids ─► Kokoro-82M (ONNX int8) ─► audio 24 kHz
-                                                        ▲
-                                    estilo de voz [510×256], fila = cantidad de fonemas
+```mermaid
+flowchart LR
+    T["Texto"] --> E["espeak-ng<br/><small>WASM · DLL</small>"]
+    E --> P["Fonemas IPA"]
+    P --> I["IDs de tokens"]
+    I --> K["Kokoro-82M<br/><small>ONNX Runtime</small>"]
+    V[("Estilo de voz<br/><small>510 × 256</small>")] -. "fila = n.º de fonemas" .-> K
+    K --> A["Audio<br/><small>24 kHz</small>"]
 ```
 
 - **Mismos fonemas en JS y en Python.** El fonemizador de JavaScript tiene una falla: después de `en-us` ignora `en-gb`. Por eso para el británico se usa `en`, y un test verifica que los fonemas y los ids coincidan con kokoro-onnx.
