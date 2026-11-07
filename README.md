@@ -1,10 +1,10 @@
-# PopSay 🫧🔊
+# PopSay 🔊
 
 Seleccionás texto en inglés y aparece una **burbuja flotante que lo pronuncia**, con transcripción IPA, resaltado sílaba por sílaba, acento americano o británico, velocidad y repetición en bucle.
 
 https://github.com/user-attachments/assets/f5d2dcbc-3c24-4547-92e5-b4ae764d36b0
 
-▶️ **[Ver la demo (1:28)](docs/popsay-demo.mp4)** · 📦 **[Descargar](https://github.com/DanielP41/PopSay---Phonetics-in-speech-bubbles/releases)** la app portable de Windows o la extensión
+📦 **[Descargar](https://github.com/DanielP41/PopSay---Phonetics-in-speech-bubbles/releases)** la app portable de Windows o la extensión
 
 **Hecho con:** Python 3.12 · PySide6 (Qt) · Kokoro-82M · ONNX Runtime · CMUdict · espeak-ng · Pyphen · JavaScript · WebAssembly · FastAPI (opcional) · C + Zig (lanzador)
 
