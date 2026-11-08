@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "PopSay — English Pronunciation",
   "short_name": "PopSay",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Seleccioná texto en inglés y escuchá su pronunciación en una burbuja flotante, con IPA. Voz incluida: funciona sin internet.",
   "minimum_chrome_version": "116",
   "icons": {

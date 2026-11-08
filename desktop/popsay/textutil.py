@@ -145,3 +145,70 @@ def position_at(timeline: list[tuple[float, float]], progress: float) -> tuple[i
         return -1, 0.0
     a, b = timeline[i]
     return i, min(1.0, max(0.0, (progress - a) / (b - a))) if b > a else 0.0
+
+_CONJ = {"and", "but", "or", "because", "when", "while", "if", "that", "which", "who", "where", "so",
+         "although", "though", "since", "until", "unless", "before", "after", "whether", "whereas"}
+_PREP = {"to", "for", "with", "in", "on", "at", "of", "by", "from", "about", "into", "through", "without",
+         "than", "like", "during", "between", "under", "over"}
+_SENT_END = re.compile(r"[.!?][\"')\]]*\s")
+_CLAUSE = re.compile(r"[,;:]\s")
+
+
+def _cut(text: str, pos: int, limit: int, prefer_from: int, stretch: int) -> int:
+    """Largo del próximo fragmento desde `pos`: termina en fin de oración, si no en coma, si no en un espacio.
+
+    Se buscan cortes de puntuación entre `prefer_from` y `limit`; si no hay, se estira hasta `stretch`
+    antes de resignarse a cortar en un espacio (un corte a mitad de frase suena como un final de oración).
+    """
+    rest = len(text) - pos
+    if rest <= limit:
+        return rest
+    for hi in (limit, min(stretch, rest)):
+        window = text[pos:pos + hi]
+        for pat in (_SENT_END, _CLAUSE):
+            cuts = [m.end() - 1 for m in pat.finditer(window) if m.end() - 1 >= prefer_from]
+            if cuts:
+                return cuts[-1] if hi == limit else cuts[0]
+        if hi >= rest:
+            return rest
+    wide = text[pos:pos + max(limit, min(stretch, rest))]
+    for words in (_CONJ, _PREP):  # sin puntuación: cortar donde empieza una frase ("… thing | when you …")
+        cuts = [m.start() for m in re.finditer(r" (\w+)", wide)
+                if m.start() >= prefer_from and m.group(1).lower() in words and m.end() < len(wide)]
+        inside = [c for c in cuts if c <= limit]
+        if inside or cuts:
+            return inside[-1] if inside else cuts[0]
+    space = text[pos:pos + limit].rfind(" ")
+    return space if space > 0 else limit
+
+
+def plan_chunks(text: str, rtf: float = 0.7, speed: float = 1.0, first_max: int = 70,
+                max_len: int = 400) -> list[tuple[str, int]]:
+    """Parte el texto en fragmentos (texto, offset) para sintetizar mientras suena, sin huecos.
+
+    `rtf` es lo que tarda el motor en generar un segundo de audio en esta compu. El primer fragmento es
+    corto para empezar enseguida; cada fragmento siguiente se dimensiona para que esté listo antes de que
+    se termine lo que ya está sonando. Con los mismos rtf y velocidad el corte es siempre igual (caché).
+    """
+    cps_low, cps_high = 15.0 * speed, 19.0 * speed  # caracteres por segundo de audio (cota baja / alta)
+    rtf = max(0.2, rtf)
+    out: list[tuple[str, int]] = []
+    pos, n, ahead = 0, len(text), 0.0
+    while pos < n:
+        while pos < n and text[pos] == " ":
+            pos += 1
+        if pos >= n:
+            break
+        if not out:
+            limit, prefer, stretch = first_max, first_max // 2, int(first_max * 1.4)
+        else:
+            limit = int(min(max_len, max(30, ahead * 0.8 * cps_low / rtf)))
+            prefer, stretch = int(limit * 0.3), limit
+        k = _cut(text, pos, limit, prefer, stretch)
+        piece = text[pos:pos + k].rstrip()
+        if piece:
+            audio = len(piece) / cps_high
+            ahead = audio if not out else ahead - rtf * audio + audio
+            out.append((piece, pos))
+        pos += max(k, 1)
+    return out

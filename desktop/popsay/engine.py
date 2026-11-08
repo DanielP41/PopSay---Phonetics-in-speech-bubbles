@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import math
 import os
 import threading
 import time
@@ -101,6 +102,7 @@ class Engine:
         self._lock = threading.Lock()
         self.model_name = ""
         self.load_seconds = 0.0
+        self._rtf = 0.7  # segundos de cálculo por segundo de audio; se mide al cargar y se ajusta con el uso
 
     def start(self) -> Future:
         return self._pool.submit(self._load)
@@ -120,13 +122,22 @@ class Engine:
             self.model_name = model.name
             # Precalentamiento: la primera inferencia es bastante más lenta.
             self._kokoro.create("Hi.", voice="af_heart", speed=1.0, lang="en-us")
+            t1 = time.perf_counter()
+            audio, _ = self._kokoro.create("This short sentence measures how fast this computer speaks.",
+                                           voice="af_heart", speed=1.0, lang="en-us")
+            self._rtf = (time.perf_counter() - t1) / max(0.5, len(audio) / SAMPLE_RATE)
             self.load_seconds = time.perf_counter() - t0
-            log.info("Kokoro (%s) listo en %.1f s", model.name, self.load_seconds)
+            log.info("Kokoro (%s) listo en %.1f s · rtf %.2f", model.name, self.load_seconds, self._rtf)
         except Exception as e:  # se informa en la UI
             log.exception("No pude cargar el modelo")
             self._error = e
         finally:
             self._ready.set()
+
+    @property
+    def rtf(self) -> float:
+        """Velocidad del motor redondeada hacia arriba (0.1): planifica los fragmentos sin huecos."""
+        return min(3.0, max(0.3, math.ceil(self._rtf * 10) / 10))
 
     @property
     def ready(self) -> bool:
@@ -172,7 +183,11 @@ class Engine:
             audio = np.asarray(audio, dtype=np.float32).ravel()
             assert sr == SAMPLE_RATE
             speech = Speech(audio=audio, weights=self._word_weights(text, lang))
-            log.info("Síntesis %.2f s de audio en %.2f s (%d car.)", speech.duration, time.perf_counter() - t0, len(text))
+            took = time.perf_counter() - t0
+            if speech.duration > 1.0:  # si la compu anda más lenta (otra tarea pesada), los cortes se achican
+                r = took / speech.duration
+                self._rtf = r if r > self._rtf else 0.8 * self._rtf + 0.2 * r
+            log.info("Síntesis %.2f s de audio en %.2f s (%d car.)", speech.duration, took, len(text))
             if self._disk and len(text) <= 300:
                 self._disk.put(disk_key, speech)
         with self._lock:

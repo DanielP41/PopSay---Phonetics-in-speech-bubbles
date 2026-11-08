@@ -175,3 +175,33 @@ def test_ortho_no_syllable_without_vowel():
     assert syllables.ortho("your") == ["your"]
     assert all(syllables._has_vowel(p) for p in syllables.ortho("yesterday"))
     assert "".join(syllables.ortho("pronunciation")) == "pronunciation"
+
+
+LONG = ("However, the most important thing when you are learning a new language is to practice speaking every "
+        "single day with real people, even if you make mistakes. Mistakes are part of the process.")
+
+
+def test_plan_chunks_offsets_and_coverage():
+    for rtf in (0.3, 0.7, 1.2):
+        chunks = textutil.plan_chunks(LONG, rtf)
+        assert all(LONG[o:o + len(c)] == c for c, o in chunks)
+        assert " ".join(c for c, _ in chunks) == LONG
+        assert all(not c.endswith(" ") for c, _ in chunks)
+
+
+def test_plan_chunks_no_gaps_by_construction():
+    rtf = 0.7
+    chunks = textutil.plan_chunks(LONG * 3, rtf)
+    ahead = len(chunks[0][0]) / 19
+    for c, _ in chunks[1:]:
+        synth = rtf * len(c) / 15
+        assert synth <= ahead + 1e-9  # listo antes de que se termine lo que ya está sonando
+        ahead += len(c) / 19 - rtf * len(c) / 19
+
+
+def test_plan_chunks_cuts_at_phrase_boundaries():
+    chunks = [c for c, _ in textutil.plan_chunks(LONG, 0.7)]
+    assert chunks[0].endswith("language is")
+    assert chunks[1].endswith(",")
+    short = "Practice your pronunciation every day."
+    assert textutil.plan_chunks(short, 0.7) == [(short, 0)]

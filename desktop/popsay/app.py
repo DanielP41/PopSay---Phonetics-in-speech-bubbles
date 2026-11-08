@@ -247,7 +247,7 @@ class Controller(QObject):
         sid = self.session
         self.bubble.set_state("loading")
         s = self.settings
-        self.chunks = textutil.chunk_text(self.bubble.text)
+        self.chunks = textutil.plan_chunks(self.bubble.text, self.engine.rtf, s.speed)
         self.parts = []
         self.appended = 0
         for i, (txt, _off) in enumerate(self.chunks):

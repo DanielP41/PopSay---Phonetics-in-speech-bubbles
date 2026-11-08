@@ -174,6 +174,75 @@
     return chunks;
   }
 
+  const CONJ = new Set(['and', 'but', 'or', 'because', 'when', 'while', 'if', 'that', 'which', 'who', 'where', 'so',
+    'although', 'though', 'since', 'until', 'unless', 'before', 'after', 'whether', 'whereas']);
+  const PREP = new Set(['to', 'for', 'with', 'in', 'on', 'at', 'of', 'by', 'from', 'about', 'into', 'through', 'without',
+    'than', 'like', 'during', 'between', 'under', 'over']);
+
+  function cutAt(text, pos, limit, preferFrom, stretch) {
+    const rest = text.length - pos;
+    if (rest <= limit) return rest;
+    for (const hi of [limit, Math.min(stretch, rest)]) {
+      const win = text.slice(pos, pos + hi);
+      for (const re of [/[.!?]["')\]]*\s/g, /[,;:]\s/g]) {
+        const cuts = [];
+        let m;
+        while ((m = re.exec(win)) !== null) if (m.index + m[0].length - 1 >= preferFrom) cuts.push(m.index + m[0].length - 1);
+        if (cuts.length) return hi === limit ? cuts[cuts.length - 1] : cuts[0];
+      }
+      if (hi >= rest) return rest;
+    }
+    const wide = text.slice(pos, pos + Math.max(limit, Math.min(stretch, rest)));
+    for (const words of [CONJ, PREP]) {
+      const cuts = [];
+      const re = / (\w+)/g;
+      let m;
+      while ((m = re.exec(wide)) !== null) {
+        if (m.index >= preferFrom && words.has(m[1].toLowerCase()) && m.index + m[0].length < wide.length) cuts.push(m.index);
+      }
+      const inside = cuts.filter((c) => c <= limit);
+      if (inside.length) return inside[inside.length - 1];
+      if (cuts.length) return cuts[0];
+    }
+    const space = text.slice(pos, pos + limit).lastIndexOf(' ');
+    return space > 0 ? space : limit;
+  }
+
+  /**
+   * Fragmentos para sintetizar mientras suena, sin huecos (igual que la app de escritorio).
+   * rtf: segundos de cálculo por segundo de audio en esta compu. El primero es corto; cada uno de los
+   * siguientes se dimensiona para estar listo antes de que termine lo que ya está sonando.
+   */
+  function planChunks(text, rtf, speed, firstMax, maxLen) {
+    rtf = Math.max(0.2, rtf || 0.7);
+    speed = speed || 1;
+    firstMax = firstMax || 70;
+    maxLen = maxLen || 400;
+    const cpsLow = 15 * speed, cpsHigh = 19 * speed;
+    const chunks = [];
+    let pos = 0, ahead = 0;
+    while (pos < text.length) {
+      while (pos < text.length && text[pos] === ' ') pos++;
+      if (pos >= text.length) break;
+      let limit, prefer, stretch;
+      if (!chunks.length) {
+        limit = firstMax; prefer = Math.floor(firstMax / 2); stretch = Math.floor(firstMax * 1.4);
+      } else {
+        limit = Math.floor(Math.min(maxLen, Math.max(30, ahead * 0.8 * cpsLow / rtf)));
+        prefer = Math.floor(limit * 0.3); stretch = limit;
+      }
+      const k = cutAt(text, pos, limit, prefer, stretch);
+      const piece = text.slice(pos, pos + k).trimEnd();
+      if (piece) {
+        const audio = piece.length / cpsHigh;
+        ahead = chunks.length ? ahead - rtf * audio + audio : audio;
+        chunks.push({ text: piece, offset: pos });
+      }
+      pos += Math.max(k, 1);
+    }
+    return chunks;
+  }
+
   function hostIsDisabled(hostname, list) {
     const host = String(hostname || '').toLowerCase();
     return (list || []).some((entry) => {
@@ -198,6 +267,7 @@
     wordIndexAtProgress,
     wordIndexAtChar,
     chunkText,
+    planChunks,
     hostIsDisabled,
     cacheKey
   };

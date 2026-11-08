@@ -76,6 +76,7 @@ def main():
         ctx = p.chromium.launch_persistent_context(
             profile,
             executable_path=exe,
+            channel=None if exe else "chromium",
             headless=True,
             args=[
                 "--headless=new",

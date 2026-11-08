@@ -179,7 +179,8 @@ async function speakLocal(session, text, settings) {
   const res = await toOffscreen({
     type: 'local-play',
     sessionId: session.id,
-    chunks: FB.chunkText(text, 220, 70), // el primero corto: empieza a sonar antes
+    text, // el reproductor lo parte según la velocidad medida en esta compu
+    chunks: FB.chunkText(text, 220, 70),
     voice,
     accent: settings.accent,
     speed: Math.max(0.5, Math.min(2, Number(settings.rate) || 1))

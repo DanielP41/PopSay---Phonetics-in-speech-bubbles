@@ -106,3 +106,15 @@ test('chunkText: primero corto y después de a una oración (igual que la app de
     'Small pull requests get faster feedback from the team, and everyone learns.', 'Ok.']);
   for (const x of c) assert.equal(t.slice(x.offset, x.offset + x.text.length), x.text);
 });
+
+test('planChunks: mismos cortes que la app de escritorio y sin perder texto', () => {
+  const t = 'However, the most important thing when you are learning a new language is to practice speaking every single day with real people, even if you make mistakes. Mistakes are part of the process.';
+  const c = FB.planChunks(t, 0.7, 1);
+  assert.deepEqual(c.map((x) => x.text), [
+    'However, the most important thing when you are learning a new language is',
+    'to practice speaking every single day with real people,',
+    'even if you make mistakes. Mistakes are part of the process.'
+  ]);
+  for (const x of c) assert.equal(t.slice(x.offset, x.offset + x.text.length), x.text);
+  assert.deepEqual(FB.planChunks('Hello world.', 0.7, 1), [{ text: 'Hello world.', offset: 0 }]);
+});

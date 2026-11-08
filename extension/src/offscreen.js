@@ -19,6 +19,7 @@ function send(kind, extra, sid) {
   chrome.runtime.sendMessage({ type: 'offscreen-event', sessionId: id, kind, ...(extra || {}) }).catch(() => {});
 }
 
+let rtf = 1.2; // segundos de cálculo por segundo de audio (WASM); se ajusta con cada síntesis
 let worker = null;
 let reqSeq = 0;
 const pending = new Map();
@@ -61,7 +62,15 @@ function synth(text, voice, accent, speed) {
     synthCache.set(key, v);
     return v;
   }
-  const p = call('synth', { text, voice, accent, speed }).then((r) => ({ audio: r.audio, weights: r.weights }));
+  const t0 = performance.now();
+  const p = call('synth', { text, voice, accent, speed }).then((r) => {
+    const secs = r.audio.length / 24000;
+    if (secs > 1) {
+      const r1 = (performance.now() - t0) / 1000 / secs;
+      rtf = r1 > rtf ? r1 : 0.8 * rtf + 0.2 * r1;
+    }
+    return { audio: r.audio, weights: r.weights };
+  });
   synthCache.set(key, p);
   p.catch(() => synthCache.delete(key));
   while (synthCache.size > MAX_SYNTH) synthCache.delete(synthCache.keys().next().value);
@@ -95,7 +104,9 @@ async function playLocal(msg) {
   sessionId = msg.sessionId;
   const sid = sessionId;
   const alive = () => sessionId === sid;
-  const { chunks, voice, accent, speed } = msg;
+  const { voice, accent, speed } = msg;
+  const plan = () => (msg.text && globalThis.PopSay ? PopSay.planChunks(msg.text, Math.ceil(rtf * 10) / 10, speed) : msg.chunks);
+  let chunks = plan();
 
   try {
     if (!modelReady) {
@@ -105,6 +116,7 @@ async function playLocal(msg) {
       console.info('Kokoro listo', info);
     }
     if (!alive()) return;
+    if (msg.text) chunks = plan(); // la primera carga del modelo ya midió la velocidad de esta compu
     await audioContext().resume();
 
     let next = synth(chunks[0].text, voice, accent, speed);
