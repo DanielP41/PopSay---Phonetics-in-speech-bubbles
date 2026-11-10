@@ -15,7 +15,7 @@ import os
 import sys
 import threading
 import time
-from typing import Callable
+from collections.abc import Callable
 
 log = logging.getLogger(__name__)
 IS_WIN = sys.platform == "win32"

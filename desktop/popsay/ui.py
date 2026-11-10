@@ -6,13 +6,22 @@ import html
 import logging
 import math
 import sys
-from typing import Callable
+from collections.abc import Callable
 
 from PySide6.QtCore import QPoint, QRect, QRectF, Qt, QTimer, Signal
-from PySide6.QtGui import QAction, QActionGroup, QColor, QCursor, QFont, QGuiApplication, QIcon, QPainter, QPainterPath, QPen
+from PySide6.QtGui import QAction, QActionGroup, QColor, QCursor, QGuiApplication, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import (
-    QApplication, QFrame, QGraphicsDropShadowEffect, QHBoxLayout, QLabel, QLayout, QMenu, QPushButton, QScrollArea, QSizePolicy,
-    QVBoxLayout, QWidget,
+    QFrame,
+    QGraphicsDropShadowEffect,
+    QHBoxLayout,
+    QLabel,
+    QLayout,
+    QMenu,
+    QPushButton,
+    QScrollArea,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
 )
 
 from . import syllables, textutil
@@ -46,7 +55,7 @@ def _svg_path(d: str) -> QPainterPath:
     import re
 
     tokens = re.findall(r"[MLHVZA]|-?\d*\.?\d+", d)
-    path, i, cur, start, cmd = QPainterPath(), 0, QPoint(), None, None
+    path, i, start, cmd = QPainterPath(), 0, None, None
     x = y = 0.0
 
     def num():

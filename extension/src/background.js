@@ -253,21 +253,31 @@ async function loadIpaDict() {
   return ipaDict;
 }
 
-function dictWord(dict, word, accent) {
-  const key = word.toLowerCase().replace(/’/g, "'");
-  const pick = (e) => (typeof e === 'string' ? e : e[accent === 'en-GB' ? 1 : 0]);
-  if (dict[key] !== undefined) return pick(dict[key]);
-  if (key.endsWith("'s") && dict[key.slice(0, -2)] !== undefined) {
-    const b = pick(dict[key.slice(0, -2)]);
-    const last = b.slice(-1);
-    return b + ('ptkfθ'.includes(last) ? 's' : 'szʃʒ'.includes(last) || /tʃ$|dʒ$/.test(b) ? 'ɪz' : 'z');
+/** IPA que sigue a la voz: el fonemizador del motor decide entre variantes y lee números y siglas. */
+async function ipaFollowingVoice(dict, clean, accent) {
+  const words = clean.split(' ').filter(Boolean);
+  const clauses = FB.ipaClauses(words).map(([a, b]) => words.slice(a, b).join(' '));
+  if (!clauses.length) return null;
+  try {
+    await ensureOffscreen();
+    const r = await toOffscreen({ type: 'phonemize', words: clauses, accent });
+    if (!r || !r.ok || !Array.isArray(r.phonemes) || r.phonemes.length !== clauses.length) return null;
+    const { perWord, approximate } = FB.ipaInContext(words, accent, dict, r.phonemes);
+    const shown = perWord.filter(Boolean);
+    if (!shown.length) return { ipa: null };
+    const unknown = shown.filter((p) => p.startsWith('‹')).map((p) => p.slice(1, -1));
+    return { ipa: shown.join(' '), source: 'local', approximate, unknown };
+  } catch {
+    return null; // sin motor: el diccionario solo
   }
-  return null;
 }
 
-/** espeak-ng usa algunos símbolos poco familiares para quien estudia; los acercamos al diccionario. */
-function cleanEspeak(ph) {
-  return ph.replace(/ᵻ/g, 'ɪ').replace(/ɐ/g, 'ə').replace(/ɾ/g, 't').replace(/ʔ/g, '').replace(/[^\p{L}\p{M}ˈˌː]/gu, '');
+function ipaFromDictionary(dict, clean, accent) {
+  const words = clean.match(TOKEN_RE) || [];
+  if (!words.length) return { ipa: null };
+  const parts = words.map((w) => FB.ipaDictWord(dict, w, accent));
+  const unknown = words.filter((_, i) => !parts[i]);
+  return { ipa: parts.map((p, i) => p || `‹${words[i]}›`).join(' '), source: 'local', approximate: accent === 'en-GB', unknown };
 }
 
 async function getIpa({ text, accent }) {
@@ -279,36 +289,7 @@ async function getIpa({ text, accent }) {
   if (ipaCache.has(key)) return ipaCache.get(key);
 
   const dict = await loadIpaDict();
-  const words = clean.match(TOKEN_RE) || [];
-  const parts = words.map((w) => dictWord(dict, w, accent));
-  const missing = words.filter((_, i) => !parts[i]);
-  let approximate = accent === 'en-GB';
-
-  if (missing.length) {
-    try {
-      await ensureOffscreen();
-      const r = await toOffscreen({ type: 'phonemize', words: missing, accent });
-      if (r && r.ok) {
-        let j = 0;
-        parts.forEach((p, i) => {
-          if (!p) {
-            const guess = cleanEspeak(r.phonemes[j++] || '');
-            if (guess) {
-              parts[i] = guess;
-              approximate = true;
-            }
-          }
-        });
-      }
-    } catch {
-      /* quedan marcadas como desconocidas */
-    }
-  }
-
-  const unknown = words.filter((_, i) => !parts[i]);
-  const result = words.length
-    ? { ipa: parts.map((p, i) => p || `‹${words[i]}›`).join(' '), source: 'local', approximate, unknown }
-    : { ipa: null };
+  const result = (await ipaFollowingVoice(dict, clean, accent)) || ipaFromDictionary(dict, clean, accent);
   ipaCache.set(key, result);
   if (ipaCache.size > 300) ipaCache.delete(ipaCache.keys().next().value);
   return result;

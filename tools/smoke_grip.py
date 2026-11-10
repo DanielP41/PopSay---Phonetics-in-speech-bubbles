@@ -1,7 +1,12 @@
 """Prueba del agarre de tamaño de la extensión: arrastrar agranda la burbuja; doble clic la restablece."""
-import sys, tempfile, threading, http.server
+import http.server
+import sys
+import tempfile
+import threading
 from pathlib import Path
+
 from playwright.sync_api import sync_playwright
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from smoke_e2e import EXT, H, find_nodes  # noqa: E402
 

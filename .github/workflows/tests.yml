@@ -1,0 +1,44 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  PYTHONUTF8: "1"
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - name: Dependencias
+        run: pip install ruff pytest numpy pyphen -r backend/requirements-dev.txt
+      - name: Linter
+        run: ruff check .
+      - name: Tests de la app
+        working-directory: desktop
+        run: python -m pytest -q
+      - name: Tests del backend
+        working-directory: backend
+        run: python -m pytest -q
+
+  extension:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: extension/package-lock.json
+      - working-directory: extension
+        run: |
+          npm ci
+          npm test

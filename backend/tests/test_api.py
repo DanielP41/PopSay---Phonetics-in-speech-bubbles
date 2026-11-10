@@ -1,7 +1,6 @@
 import asyncio
 
 import httpx
-
 from app.cache import MemoryCache, audio_key
 from app.config import Settings
 from app.providers import Audio, AzureProvider, OpenAIProvider

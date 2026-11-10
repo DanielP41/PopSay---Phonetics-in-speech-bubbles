@@ -1,5 +1,6 @@
 """Genera los íconos PNG de la extensión (burbuja de diálogo + ondas de sonido)."""
 from pathlib import Path
+
 from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parent.parent

@@ -33,7 +33,7 @@ class Settings:
     _path: Path | None = field(default=None, repr=False, compare=False)
 
     @classmethod
-    def load(cls, path: Path) -> "Settings":
+    def load(cls, path: Path) -> Settings:
         s = cls()
         try:
             raw = json.loads(path.read_text(encoding="utf-8"))

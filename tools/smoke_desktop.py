@@ -11,11 +11,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "desktop"))
 
-from PySide6.QtCore import QPoint, QTimer  # noqa: E402
-from PySide6.QtWidgets import QApplication  # noqa: E402
-
 from popsay import app as appmod  # noqa: E402
 from popsay import engine  # noqa: E402
+from PySide6.QtCore import QPoint, QTimer  # noqa: E402
+from PySide6.QtWidgets import QApplication  # noqa: E402
 
 
 class FakePlayer:

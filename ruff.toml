@@ -1,0 +1,14 @@
+# Linter de Python para la app, el backend y las herramientas.
+line-length = 130
+target-version = "py311"
+extend-exclude = ["extension", "core", "dist", "data"]
+
+[lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = [
+    "E501",  # largo de línea: lo cuida el formato a mano
+    "E701", "E702",  # sentencias cortas en una línea
+    "B008",  # Depends() de FastAPI en los valores por defecto
+    "B905",  # zip() sin strict: los largos ya coinciden por construcción
+    "UP031",  # % en los mensajes de las pruebas manuales
+]

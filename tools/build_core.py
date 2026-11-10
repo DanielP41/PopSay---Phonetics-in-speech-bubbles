@@ -39,6 +39,9 @@ VOICES = {
 }
 
 
+ALT_KEY = "#alt"  # dentro de ipa-en.json: palabra → pronunciaciones alternativas
+
+
 def fetch_models() -> None:
     MODELS.mkdir(parents=True, exist_ok=True)
     for name, size in FILES.items():
@@ -83,16 +86,25 @@ def build_ipa() -> None:
 
     out = CORE / "ipa"
     out.mkdir(parents=True, exist_ok=True)
-    data: dict[str, str | list[str]] = {}
+    data: dict[str, str | list[str] | dict] = {}
+    alt: dict[str, list[str | list[str]]] = {}  # otras pronunciaciones: "read", "live", "the"…
     for word, prons in cmudict.dict().items():
         if not any(c.isalpha() for c in word):
             continue
-        us = phones_to_ipa(prons[0], "en-US", word)
-        gb = phones_to_ipa(prons[0], "en-GB", word)
-        data[word] = us if us == gb else [us, gb]
+        entries = []
+        for pron in prons:
+            us = phones_to_ipa(pron, "en-US", word)
+            gb = phones_to_ipa(pron, "en-GB", word)
+            entry = us if us == gb else [us, gb]
+            if entry not in entries:
+                entries.append(entry)
+        data[word] = entries[0]
+        if len(entries) > 1:
+            alt[word] = entries[1:]
+    data[ALT_KEY] = alt
     path = out / "ipa-en.json"
     path.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":"), sort_keys=True), encoding="utf-8")
-    print(f"IPA: {len(data)} palabras → {path} ({path.stat().st_size / 1e6:.1f} MB)")
+    print(f"IPA: {len(data) - 1} palabras, {len(alt)} con variantes → {path} ({path.stat().st_size / 1e6:.1f} MB)")
 
 
 if __name__ == "__main__":

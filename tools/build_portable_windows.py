@@ -15,7 +15,6 @@ Uso:  python tools/build_portable_windows.py
 
 from __future__ import annotations
 
-import fnmatch
 import shutil
 import subprocess
 import sys

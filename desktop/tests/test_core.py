@@ -1,7 +1,8 @@
 import json
+from functools import lru_cache
+from pathlib import Path
 
 import pytest
-
 from popsay import paths, textutil, winsys
 from popsay.ipa import IpaDictionary
 from popsay.settings import Settings
@@ -117,7 +118,6 @@ def test_chunk_text_never_loses_text():
 
 def test_disk_cache_roundtrip(tmp_path):
     import numpy as np
-
     from popsay.engine import DiskCache, Speech
 
     c = DiskCache(tmp_path, max_mb=1)
@@ -205,3 +205,60 @@ def test_plan_chunks_cuts_at_phrase_boundaries():
     assert chunks[1].endswith(",")
     short = "Practice your pronunciation every day."
     assert textutil.plan_chunks(short, 0.7) == [(short, 0)]
+
+
+@lru_cache(maxsize=1)
+def _shared_dict() -> IpaDictionary:
+    return IpaDictionary(paths.find(paths.IPA_FILE))
+
+
+def _dict_hearing(phonemize) -> IpaDictionary:
+    d = _shared_dict()
+    d.fallback = phonemize
+    return d
+
+
+def _context_cases():
+    return json.loads((Path(__file__).resolve().parents[2] / "core" / "tests" / "ipa-context.json").read_text("utf-8"))
+
+
+def test_ipa_follows_the_voice():
+    """Casos reales compartidos con la extensión: fonemas de espeak-ng → IPA que se muestra."""
+    from popsay import align
+
+    for case in _context_cases():
+        words = case["text"].split()
+        heard = {" ".join(words[a:b]): h for (a, b), h in zip(align.clauses(words), case["heard"])}
+        d = _dict_hearing(lambda text, accent, heard=heard: heard.get(text, ""))
+        assert d.transcribe_words(words, case["accent"]) == (case["expected"], case["approximate"]), case["text"]
+
+
+def test_ipa_picks_the_spoken_variant():
+    said = {"I will read it.": "aɪ wɪl ɹˈiːd ɪt.", "I have read it.": "aɪ hæv ɹˈɛd ɪt.",
+            "the end": "ðɪ ˈɛnd", "the car": "ðə kˈɑːɹ", "In 2026": "ɪn tˈuː θˈaʊzənd twˈɛnti sˈɪks"}
+    d = _dict_hearing(lambda text, accent: said[text])
+    assert d.transcribe_words("I will read it.".split())[0][2] == "rid"
+    assert d.transcribe_words("I have read it.".split())[0][2] == "rɛd"
+    assert d.transcribe_words("the end".split())[0][0] == "ði"
+    assert d.transcribe_words("the car".split())[0][0] == "ðə"
+    words, approx = d.transcribe_words("In 2026".split())
+    assert words[1] == "tˈuː θˈaʊzənd twˈɛnti sˈɪks" and approx
+
+
+def test_ipa_falls_back_to_dictionary_when_phonemizer_fails():
+    def broken(text, accent):
+        raise RuntimeError("sin motor")
+
+    d = _dict_hearing(broken)
+    assert d.transcribe_words(["read", "this"])[0] == ["rɛd", "ðɪs"]
+    silent = _dict_hearing(lambda text, accent: "")
+    assert silent.transcribe_words(["read", "this"])[0] == ["rɛd", "ðɪs"]
+
+
+def test_ipa_syllables_of_multiword_phonemes():
+    from popsay import syllables
+
+    for s in ("tˈuː θˈaʊzənd twˈɛnti sˈɪks", "kəkˈɔːroʊ", "əˈbaʊt", "rɪˈkwaɪɚd"):
+        assert "".join(syllables.ipa(s)) == s
+    assert syllables.ipa("kəkˈɔːroʊ") == ["kə", "kˈɔː", "roʊ"]
+    assert syllables.ipa("əˈbaʊt") == ["ə", "ˈbaʊt"]

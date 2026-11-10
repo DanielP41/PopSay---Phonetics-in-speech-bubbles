@@ -1,5 +1,4 @@
 import pytest
-
 from app.ipa import phones_to_ipa, transcribe
 
 

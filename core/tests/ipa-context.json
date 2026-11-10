@@ -1,0 +1,416 @@
+[
+ {
+  "text": "I read the book yesterday, and I will read it again.",
+  "accent": "en-US",
+  "heard": [
+   "aɪ ɹˈiːd ðə bˈʊk jˈɛstɚdˌeɪ,",
+   "ænd aɪ wɪl ɹˈiːd ɪɾ ɐɡˈɛn."
+  ],
+  "expected": [
+   "aɪ",
+   "rid",
+   "ðə",
+   "bʊk",
+   "ˈjɛstɚdeɪ",
+   "ænd",
+   "aɪ",
+   "wɪl",
+   "rid",
+   "ɪt",
+   "əˈɡɛn"
+  ],
+  "approximate": false
+ },
+ {
+  "text": "I read the book yesterday, and I will read it again.",
+  "accent": "en-GB",
+  "heard": [
+   "aɪ ɹˈiːd ðə bˈʊk jˈɛstədˌeɪ,",
+   "and aɪ wɪl ɹˈiːd ɪt ɐɡˈɛn."
+  ],
+  "expected": [
+   "aɪ",
+   "riːd",
+   "ðə",
+   "bʊk",
+   "ˈjestədeɪ",
+   "ænd",
+   "aɪ",
+   "wɪl",
+   "riːd",
+   "ɪt",
+   "əˈɡen"
+  ],
+  "approximate": true
+ },
+ {
+  "text": "I have read that book. I read every day.",
+  "accent": "en-US",
+  "heard": [
+   "aɪ hæv ɹˈɛd ðæt bˈʊk.",
+   "aɪ ɹˈiːd ˈɛvɹi dˈeɪ."
+  ],
+  "expected": [
+   "aɪ",
+   "hæv",
+   "rɛd",
+   "ðæt",
+   "bʊk",
+   "aɪ",
+   "rid",
+   "ˈɛvri",
+   "deɪ"
+  ],
+  "approximate": false
+ },
+ {
+  "text": "I have read that book. I read every day.",
+  "accent": "en-GB",
+  "heard": [
+   "aɪ hav ɹˈɛd ðat bˈʊk.",
+   "aɪ ɹˈiːd ˈɛvɹɪ dˈeɪ."
+  ],
+  "expected": [
+   "aɪ",
+   "hæv",
+   "red",
+   "ðæt",
+   "bʊk",
+   "aɪ",
+   "riːd",
+   "ˈevri",
+   "deɪ"
+  ],
+  "approximate": true
+ },
+ {
+  "text": "They live in a house of the old town. We saw a live show.",
+  "accent": "en-US",
+  "heard": [
+   "ðeɪ lˈɪv ɪn ɐ hˈaʊs ʌvðɪ ˈoʊld tˈaʊn.",
+   "wiː sˈɔː ɐ lˈaɪv ʃˈoʊ."
+  ],
+  "expected": [
+   "ðeɪ",
+   "lɪv",
+   "ɪn",
+   "ə",
+   "haʊs",
+   "ʌv",
+   "ði",
+   "oʊld",
+   "taʊn",
+   "wi",
+   "sɔ",
+   "ə",
+   "laɪv",
+   "ʃoʊ"
+  ],
+  "approximate": false
+ },
+ {
+  "text": "They live in a house of the old town. We saw a live show.",
+  "accent": "en-GB",
+  "heard": [
+   "ðeɪ lˈɪv ɪn ɐ hˈaʊs ɒvðɪ ˈəʊld tˈaʊn.",
+   "wiː sˈɔː ɐ lˈaɪv ʃˈəʊ."
+  ],
+  "expected": [
+   "ðeɪ",
+   "lɪv",
+   "ɪn",
+   "ə",
+   "haʊs",
+   "ʌv",
+   "ði",
+   "əʊld",
+   "taʊn",
+   "wiː",
+   "sɔː",
+   "ə",
+   "laɪv",
+   "ʃəʊ"
+  ],
+  "approximate": true
+ },
+ {
+  "text": "I want to record a record.",
+  "accent": "en-US",
+  "heard": [
+   "aɪ wˈɔnt tə ɹᵻkˈɔːɹd ɐ ɹˈɛkɚd."
+  ],
+  "expected": [
+   "aɪ",
+   "wɑnt",
+   "tə",
+   "rɪˈkɔrd",
+   "ə",
+   "ˈrɛkɚd"
+  ],
+  "approximate": false
+ },
+ {
+  "text": "I want to record a record.",
+  "accent": "en-GB",
+  "heard": [
+   "aɪ wˈɒnt tə ɹɪkˈɔːd ɐ ɹˈɛkɔːd."
+  ],
+  "expected": [
+   "aɪ",
+   "wɒnt",
+   "tə",
+   "rɪˈkɔːd",
+   "ə",
+   "ˈrekəd"
+  ],
+  "approximate": true
+ },
+ {
+  "text": "She will present the present at the event.",
+  "accent": "en-US",
+  "heard": [
+   "ʃiː wɪl pɹɪzˈɛnt ðə pɹˈɛzənt æt ðɪ ᵻvˈɛnt."
+  ],
+  "expected": [
+   "ʃi",
+   "wɪl",
+   "prɪˈzɛnt",
+   "ðə",
+   "ˈprɛzənt",
+   "æt",
+   "ði",
+   "ɪˈvɛnt"
+  ],
+  "approximate": false
+ },
+ {
+  "text": "She will present the present at the event.",
+  "accent": "en-GB",
+  "heard": [
+   "ʃiː wɪl pɹɪzˈɛnt ðə pɹˈɛzənt at ðɪ ɪvˈɛnt."
+  ],
+  "expected": [
+   "ʃiː",
+   "wɪl",
+   "prɪˈzent",
+   "ðə",
+   "ˈprezənt",
+   "æt",
+   "ði",
+   "ɪˈvent"
+  ],
+  "approximate": true
+ },
+ {
+  "text": "The wind will wind down. The apple and the car.",
+  "accent": "en-US",
+  "heard": [
+   "ðə wˈɪnd wɪl wˈaɪnd dˈaʊn.",
+   "ðɪ ˈæpəl ænd ðə kˈɑːɹ."
+  ],
+  "expected": [
+   "ðə",
+   "wɪnd",
+   "wɪl",
+   "waɪnd",
+   "daʊn",
+   "ði",
+   "ˈæpəl",
+   "ænd",
+   "ðə",
+   "kɑr"
+  ],
+  "approximate": false
+ },
+ {
+  "text": "The wind will wind down. The apple and the car.",
+  "accent": "en-GB",
+  "heard": [
+   "ðə wˈɪnd wɪl wˈaɪnd dˈaʊn.",
+   "ðɪ ˈapəl and ðə kˈɑː."
+  ],
+  "expected": [
+   "ðə",
+   "wɪnd",
+   "wɪl",
+   "waɪnd",
+   "daʊn",
+   "ði",
+   "ˈæpəl",
+   "ænd",
+   "ðə",
+   "kɑː"
+  ],
+  "approximate": true
+ },
+ {
+  "text": "In 2026 the USA spent $3.50 on Dr. Smith.",
+  "accent": "en-US",
+  "heard": [
+   "ɪn tˈuː θˈaʊzənd twˈɛnti sˈɪks ðə jˌuːˌɛsˈeɪ spˈɛnt dˈɑːlɚ θɹˈiː pɔɪnt fˈaɪv zˈiəɹoʊ ˌɔn dˈɑːktɚ.",
+   "smˈɪθ."
+  ],
+  "expected": [
+   "ɪn",
+   "tˈuː θˈaʊzənd twˈɛnti sˈɪks",
+   "ðə",
+   "ˌjuˌɛˈseɪ",
+   "spɛnt",
+   "dˈɑːlɚ θrˈiː pɔɪnt fˈaɪv zˈiəroʊ",
+   "ɑn",
+   "ˈdɑktɚ",
+   "smɪθ"
+  ],
+  "approximate": true
+ },
+ {
+  "text": "In 2026 the USA spent $3.50 on Dr. Smith.",
+  "accent": "en-GB",
+  "heard": [
+   "ɪn tˈuː θˈaʊzənd ən twˈɛnti sˈɪks ðə jˌuːˌɛsˈeɪ spˈɛnt dˈɒlə θɹˈiː pɔɪnt fˈaɪv zˈiəɹəʊ ˌɒn dˈɒktə.",
+   "smˈɪθ."
+  ],
+  "expected": [
+   "ɪn",
+   "tˈuː θˈaʊzənd ən twˈɛnti sˈɪks",
+   "ðə",
+   "ˌjuːˌeˈseɪ",
+   "spent",
+   "dˈɒlə θrˈiː pɔɪnt fˈaɪv zˈiərəʊ",
+   "ɒn",
+   "ˈdɑːktə",
+   "smɪθ"
+  ],
+  "approximate": true
+ },
+ {
+  "text": "A well-known tomato — either way, it's Daniel's idea at 9:30!",
+  "accent": "en-US",
+  "heard": [
+   "ɐ wˈɛlnˈoʊn təmˈeɪɾoʊ — ˈiːðɚ wˈeɪ,",
+   "ɪts dˈænjəlz aɪdˈiə æt nˈaɪn:θˈɜːɾi!"
+  ],
+  "expected": [
+   "ə",
+   "wɛlnoʊn",
+   "təˈmeɪtoʊ",
+   null,
+   "ˈiðɚ",
+   "weɪ",
+   "ɪts",
+   "ˈdænjəlz",
+   "aɪˈdiə",
+   "æt",
+   "nˈaɪnθˈɜːti"
+  ],
+  "approximate": true
+ },
+ {
+  "text": "A well-known tomato — either way, it's Daniel's idea at 9:30!",
+  "accent": "en-GB",
+  "heard": [
+   "ɐ wˈɛlnˈəʊn təmˈɑːtəʊ — ˈaɪðə wˈeɪ,",
+   "ɪts dˈanjəlz aɪdˈiəɹ at nˈaɪn:θˈɜːti!"
+  ],
+  "expected": [
+   "ə",
+   "welnəʊn",
+   "təˈmɒtəʊ",
+   null,
+   "ˈaɪðə",
+   "weɪ",
+   "ɪts",
+   "ˈdænjəlz",
+   "aɪˈdiːə",
+   "æt",
+   "nˈaɪnθˈɜːti"
+  ],
+  "approximate": true
+ },
+ {
+  "text": "Kokoro and PopSay use WebAssembly.",
+  "accent": "en-US",
+  "heard": [
+   "kəkˈɔːɹoʊ ænd pˈɑːp sˈeɪ jˈuːs wˈɛb ɐsˈɛmbli."
+  ],
+  "expected": [
+   "kəkˈɔːroʊ",
+   "ænd",
+   "pˈɑːp sˈeɪ",
+   "jus",
+   "wˈɛb əsˈɛmbli"
+  ],
+  "approximate": true
+ },
+ {
+  "text": "Kokoro and PopSay use WebAssembly.",
+  "accent": "en-GB",
+  "heard": [
+   "kəkˈɔːɹəʊ and pˈɒp sˈeɪ jˈuːs wˈɛb ɐsˈɛmblɪ."
+  ],
+  "expected": [
+   "kəkˈɔːrəʊ",
+   "ænd",
+   "pˈɒp sˈeɪ",
+   "juːs",
+   "wˈɛb əsˈɛmblɪ"
+  ],
+  "approximate": true
+ },
+ {
+  "text": "Practice your pronunciation every day.",
+  "accent": "en-US",
+  "heard": [
+   "pɹˈæktɪs jʊɹ pɹənˌʌnsɪˈeɪʃən ˈɛvɹi dˈeɪ."
+  ],
+  "expected": [
+   "ˈpræktɪs",
+   "jʊr",
+   "prəˌnʌnsɪˈeɪʃən",
+   "ˈɛvri",
+   "deɪ"
+  ],
+  "approximate": false
+ },
+ {
+  "text": "Practice your pronunciation every day.",
+  "accent": "en-GB",
+  "heard": [
+   "pɹˈaktɪs jɔː pɹənˌʌnsɪˈeɪʃən ˈɛvɹɪ dˈeɪ."
+  ],
+  "expected": [
+   "ˈpræktɪs",
+   "jɔː",
+   "prəˌnʌnsɪˈeɪʃən",
+   "ˈevri",
+   "deɪ"
+  ],
+  "approximate": true
+ },
+ {
+  "text": "— … !",
+  "accent": "en-US",
+  "heard": [
+   "— … !"
+  ],
+  "expected": [
+   null,
+   null,
+   null
+  ],
+  "approximate": false
+ },
+ {
+  "text": "— … !",
+  "accent": "en-GB",
+  "heard": [
+   "— … !"
+  ],
+  "expected": [
+   null,
+   null,
+   null
+  ],
+  "approximate": true
+ }
+]

@@ -227,8 +227,10 @@ class Controller(QObject):
         sid, text, accent = self.session, self.bubble.text, self.settings.accent
 
         def work():
-            per_word, approx = self.ipa.transcribe_words([w.text for w in textutil.split_words(text)], accent)
-            self.bridge.ipa_ready.emit(sid, per_word, approx)
+            words = [w.text for w in textutil.split_words(text)]
+            if not self.engine.ready:  # mientras carga la voz, el diccionario solo; después se afina
+                self.bridge.ipa_ready.emit(sid, *self.ipa.transcribe_words(words, accent, in_context=False))
+            self.bridge.ipa_ready.emit(sid, *self.ipa.transcribe_words(words, accent))
 
         self.misc.submit(work)
 

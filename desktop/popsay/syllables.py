@@ -122,6 +122,12 @@ def _units(ipa: str) -> list[tuple[str, str]]:
 
 def ipa(word_ipa: str) -> list[str]:
     """Sílabas de la transcripción de UNA palabra (unidas devuelven el texto original)."""
+    if " " in word_ipa.strip():  # un número o una sigla se dicen con varias palabras ("twenty six")
+        out: list[str] = []
+        for part in re.findall(r"\S+\s*|^\s+", word_ipa):
+            out += ipa(part.rstrip()) if part.strip() else [part]
+            out[-1] += part[len(part.rstrip()):]
+        return out
     units = _units(word_ipa)
     nuclei = [k for k, (_, t) in enumerate(units) if t == "V"]
     if len(nuclei) <= 1:
@@ -130,10 +136,12 @@ def ipa(word_ipa: str) -> list[str]:
     for a, b in zip(nuclei, nuclei[1:]):
         between = list(range(a + 1, b))
         stress = [k for k in between if units[k][1] == "S"]
-        if stress:  # la marca de acento ya indica dónde empieza la sílaba
+        cons = [k for k in between if units[k][1] == "C"]
+        # la marca de acento indica dónde empieza la sílaba, salvo cuando va pegada a la vocal detrás de
+        # su consonante (así escribe espeak: "kəkˈɔːɹoʊ"); ahí la sílaba empieza en la consonante
+        if stress and not (cons and stress[0] == b - 1):
             starts.append(stress[0])
             continue
-        cons = [k for k in between if units[k][1] == "C"]
         if not cons:
             starts.append(b)
         elif len(cons) == 1:

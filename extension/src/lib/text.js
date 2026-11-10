@@ -243,6 +243,216 @@
     return chunks;
   }
 
+  // ---- IPA que sigue a la voz (misma lógica que desktop/popsay/align.py e ipa.py) ----
+
+  const IPA_ALT_KEY = '#alt';
+  const IPA_UNIT = /[A-Za-z]+(?:['’][A-Za-z]+)*|[0-9$€£%&@#+=][0-9$€£%&@#+=.,:/]*/g;
+  const IPA_CLAUSE_END = /[.!?;:,]["')\]]*$/;
+  const IPA_MAX_CLAUSE_WORDS = 24;
+  const IPA_VOWELS = new Set('aeiouæɑɒɔəɛɜɪʊʌ');
+  const IPA_MAP = [['ɚ', 'ər'], ['ɝ', 'ər'], ['ɜ', 'ər'], ['ɹ', 'r'], ['ᵻ', 'ɪ'], ['ɐ', 'ə'], ['ɾ', 't'], ['ʌ', 'ə'],
+    ['ɒ', 'ɑ'], ['ɔ', 'ɑ'], ['g', 'ɡ'], ['i', 'ɪ']];
+  const IPA_SOUND = /[a-zæðŋθɐ-ʯ]/;
+
+  /** Forma gruesa común al diccionario y a espeak, con el acento principal pegado a su vocal. */
+  function ipaNorm(ipa) {
+    let s = ipa.replace(/a(?![ɪʊ])/g, 'æ').replace(/e(?![ɪə])/g, 'ɛ');
+    for (const [a, b] of IPA_MAP) s = s.split(a).join(b);
+    let out = '';
+    let pending = false;
+    for (const ch of s) {
+      if (ch === 'ˈ') pending = true;
+      else if (IPA_VOWELS.has(ch)) {
+        if (pending) { out += 'ˈ'; pending = false; }
+        out += ch;
+      } else if (IPA_SOUND.test(ch)) out += ch;
+    }
+    return out.split('rr').join('r');
+  }
+
+  function lev(a, b) {
+    if (a === b) return 0;
+    let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+    for (let i = 1; i <= a.length; i++) {
+      const cur = [i];
+      for (let j = 1; j <= b.length; j++) {
+        cur.push(Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] !== b[j - 1] ? 1 : 0)));
+      }
+      prev = cur;
+    }
+    return prev[b.length];
+  }
+
+  /** El diccionario no acentúa los monosílabos y espeak sí: sin marca en la variante, el acento no se compara. */
+  function ipaDist(variant, heard) {
+    return lev(variant, variant.includes('ˈ') ? heard : heard.split('ˈ').join(''));
+  }
+
+  /** Rangos [desde, hasta) de palabras que se fonemizan juntas (hasta un signo de puntuación). */
+  function ipaClauses(words) {
+    const out = [];
+    let start = 0;
+    words.forEach((w, i) => {
+      if (IPA_CLAUSE_END.test(w) || i + 1 - start >= IPA_MAX_CLAUSE_WORDS) {
+        out.push([start, i + 1]);
+        start = i + 1;
+      }
+    });
+    if (start < words.length) out.push([start, words.length]);
+    return out;
+  }
+
+  function ipaTokens(phonemes) {
+    return String(phonemes || '').split(/\s+/).map((t) => t.replace(/^[.,;:!?"'()[\]—–\-…]+|[.,;:!?"'()[\]—–\-…]+$/g, '')).filter(Boolean);
+  }
+
+  function ipaSplit(exps, s) {
+    const g = exps.length, n = s.length;
+    const best = Array.from({ length: g + 1 }, () => new Array(n + 1).fill(Infinity));
+    const cut = Array.from({ length: g + 1 }, () => new Array(n + 1).fill(0));
+    best[0][0] = 0;
+    for (let u = 0; u < g; u++) {
+      for (let p = 0; p <= n; p++) {
+        if (best[u][p] === Infinity) continue;
+        for (let q = p + 1; q <= n; q++) {
+          const c = best[u][p] + Math.min(...exps[u].map((v) => ipaDist(v, s.slice(p, q))));
+          if (c < best[u + 1][q]) { best[u + 1][q] = c; cut[u + 1][q] = p; }
+        }
+      }
+    }
+    const pieces = [];
+    let q = n;
+    for (let u = g; u > 0; u--) {
+      const p = cut[u][q];
+      pieces.unshift(s.slice(p, q));
+      q = p;
+    }
+    return [best[g][n], pieces];
+  }
+
+  /**
+   * Para cada unidad del texto: [fonemas normalizados, fonemas tal como los da espeak].
+   * expected[i]: variantes normalizadas del diccionario, o null si no está (número, sigla, nombre).
+   */
+  function ipaAlign(expected, toks) {
+    const n = expected.length, m = toks.length;
+    const nt = toks.map(ipaNorm);
+    const dp = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(Infinity));
+    const back = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(null));
+    dp[0][0] = 0;
+    const relax = (i2, j2, cost, step) => {
+      if (cost < dp[i2][j2]) { dp[i2][j2] = cost; back[i2][j2] = step; }
+    };
+    for (let i = 0; i <= n; i++) {
+      for (let j = 0; j <= m; j++) {
+        const base = dp[i][j];
+        if (base === Infinity) continue;
+        if (j < m) relax(i, j + 1, base + 3, [i, j, []]);
+        if (i === n) continue;
+        const exp = expected[i];
+        relax(i + 1, j, base + (exp ? 4 : 2), [i, j, [['', '']]]);
+        let seg = '';
+        for (let k = 1; k <= (exp ? 3 : 12); k++) {
+          if (j + k > m) break;
+          seg += nt[j + k - 1];
+          const cost = exp ? Math.min(...exp.map((v) => ipaDist(v, seg))) + 0.3 * (k - 1) : 1 + 0.01 * k;
+          relax(i + 1, j + k, base + cost, [i, j, [[seg, toks.slice(j, j + k).join(' ')]]]);
+        }
+        if (j < m && exp) {
+          for (const g of [2, 3]) {
+            const group = expected.slice(i, i + g);
+            if (group.length < g || !group.every(Boolean)) break;
+            const [cost, pieces] = ipaSplit(group, nt[j]);
+            relax(i + g, j + 1, base + cost + 0.2, [i, j, pieces.map((p) => [p, p])]);
+          }
+        }
+      }
+    }
+    let out = [];
+    let i = n, j = m;
+    while (i !== 0 || j !== 0) {
+      const [pi, pj, segs] = back[i][j];
+      out = segs.concat(out);
+      i = pi; j = pj;
+    }
+    return out;
+  }
+
+  /** Índice de la variante del diccionario más parecida a lo que suena (empate: la primera). */
+  function ipaPick(variants, heard) {
+    if (!heard || variants.length < 2) return 0;
+    const costs = variants.map((v) => ipaDist(ipaNorm(v), heard));
+    return costs.indexOf(Math.min(...costs));
+  }
+
+  /** IPA de diccionario de una palabra (con posesivo 's), o null. */
+  function ipaDictWord(dict, word, accent) {
+    const key = word.toLowerCase().replace(/’/g, "'");
+    const pick = (e) => (typeof e === 'string' ? e : e[accent === 'en-GB' ? 1 : 0]);
+    if (key !== IPA_ALT_KEY && dict[key] !== undefined) return pick(dict[key]);
+    if (key.endsWith("'s") && dict[key.slice(0, -2)] !== undefined) {
+      const b = pick(dict[key.slice(0, -2)]);
+      const last = b.slice(-1);
+      return b + ('ptkfθ'.includes(last) ? 's' : 'szʃʒ'.includes(last) || /tʃ$|dʒ$/.test(b) ? 'ɪz' : 'z');
+    }
+    return null;
+  }
+
+  /** Pronunciaciones de diccionario de una palabra para ese acento (la primera es la más común). */
+  function ipaVariants(dict, word, accent) {
+    const key = word.toLowerCase().replace(/’/g, "'");
+    if (key === IPA_ALT_KEY || dict[key] === undefined) {
+      const w = ipaDictWord(dict, word, accent);
+      return w ? [w] : [];
+    }
+    const k = accent === 'en-GB' ? 1 : 0;
+    const out = [];
+    for (const e of [dict[key], ...((dict[IPA_ALT_KEY] || {})[key] || [])]) {
+      const v = typeof e === 'string' ? e : e[k];
+      if (!out.includes(v)) out.push(v);
+    }
+    return out;
+  }
+
+  /** espeak-ng usa algunos símbolos poco familiares para quien estudia; los acercamos al diccionario. */
+  function ipaCleanEspeak(ph) {
+    return String(ph || '').replace(/[^\p{L}\p{N}_ ˈˌː]/gu, '')
+      .replace(/ᵻ/g, 'ɪ').replace(/ɐ/g, 'ə').replace(/ɾ/g, 't').replace(/ʔ/g, '').replace(/ɹ/g, 'r').trim();
+  }
+
+  /**
+   * IPA de cada palabra visible siguiendo lo que pronuncia la voz. heard[c] son los fonemas de espeak
+   * para la cláusula c de ipaClauses(words). Devuelve { perWord: (string|null)[], approximate }.
+   */
+  function ipaInContext(words, accent, dict, heard) {
+    const perWord = [];
+    let approximate = accent === 'en-GB';
+    ipaClauses(words).forEach(([a, b], c) => {
+      const units = [];
+      for (let i = a; i < b; i++) {
+        for (const m of words[i].matchAll(IPA_UNIT)) units.push([i, m[0].replace(/[.,:/]+$/, '')]);
+      }
+      const variants = units.map(([, u]) => (/[A-Za-z]/.test(u[0]) ? ipaVariants(dict, u, accent) : []));
+      const toks = units.length ? ipaTokens(heard[c]) : [];
+      const segs = ipaAlign(variants.map((vs) => (vs.length ? vs.map(ipaNorm) : null)), toks);
+      const parts = {};
+      units.forEach(([i, unit], x) => {
+        const vs = variants[x];
+        const [heardNorm, heardRaw] = segs[x];
+        let ipa;
+        if (vs.length) ipa = vs[ipaPick(vs, heardNorm)];
+        else {
+          ipa = ipaCleanEspeak(heardRaw);
+          if (!ipa && /[A-Za-z]/.test(unit[0])) ipa = `‹${unit}›`;
+          approximate = approximate || Boolean(ipa);
+        }
+        if (ipa) (parts[i] = parts[i] || []).push(ipa);
+      });
+      for (let i = a; i < b; i++) perWord.push(parts[i] ? parts[i].join('') : null);
+    });
+    return { perWord, approximate };
+  }
+
   function hostIsDisabled(hostname, list) {
     const host = String(hostname || '').toLowerCase();
     return (list || []).some((entry) => {
@@ -268,6 +478,15 @@
     wordIndexAtChar,
     chunkText,
     planChunks,
+    ipaNorm,
+    ipaClauses,
+    ipaTokens,
+    ipaAlign,
+    ipaPick,
+    ipaDictWord,
+    ipaVariants,
+    ipaCleanEspeak,
+    ipaInContext,
     hostIsDisabled,
     cacheKey
   };

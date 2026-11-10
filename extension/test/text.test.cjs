@@ -118,3 +118,26 @@ test('planChunks: mismos cortes que la app de escritorio y sin perder texto', ()
   for (const x of c) assert.equal(t.slice(x.offset, x.offset + x.text.length), x.text);
   assert.deepEqual(FB.planChunks('Hello world.', 0.7, 1), [{ text: 'Hello world.', offset: 0 }]);
 });
+
+test('IPA en contexto: mismos resultados que la app en los casos compartidos', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const core = path.join(__dirname, '..', '..', 'core');
+  const dict = JSON.parse(fs.readFileSync(path.join(core, 'ipa', 'ipa-en.json'), 'utf8'));
+  const cases = JSON.parse(fs.readFileSync(path.join(core, 'tests', 'ipa-context.json'), 'utf8'));
+  assert.ok(cases.length >= 20);
+  for (const c of cases) {
+    const words = c.text.split(/\s+/).filter(Boolean);
+    const r = FB.ipaInContext(words, c.accent, dict, c.heard);
+    assert.deepEqual(r.perWord, c.expected, `${c.accent} · ${c.text}`);
+    assert.equal(r.approximate, c.approximate, c.text);
+  }
+});
+
+test('IPA en contexto: elige la variante que suena y no confunde la clave interna', () => {
+  const dict = { read: 'rɛd', it: 'ɪt', will: 'wɪl', i: 'aɪ', '#alt': { read: ['rid'] } };
+  assert.deepEqual(FB.ipaInContext(['I', 'will', 'read', 'it.'], 'en-US', dict, ['aɪ wɪl ɹˈiːd ɪt.']).perWord, ['aɪ', 'wɪl', 'rid', 'ɪt']);
+  assert.deepEqual(FB.ipaInContext(['read'], 'en-US', dict, ['']).perWord, ['rɛd']);
+  assert.equal(FB.ipaDictWord(dict, '#alt', 'en-US'), null);
+  assert.deepEqual(FB.ipaVariants(dict, 'read', 'en-US'), ['rɛd', 'rid']);
+});
