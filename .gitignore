@@ -10,3 +10,6 @@ core/models/
 extension/models/
 extension/vendor/
 extension/src/engine/kokoro-worker.js
+
+# capturas de las pruebas manuales
+tools/*.png
