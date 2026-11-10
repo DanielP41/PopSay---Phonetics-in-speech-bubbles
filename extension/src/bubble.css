@@ -190,6 +190,20 @@ svg { width: 18px; height: 18px; display: block; flex: none; }
   color: var(--accent-ink);
 }
 
+.fb-syl { border-radius: 3px; transition: background-color 0.08s, color 0.08s; }
+.fb-card[data-state="playing"] .fb-word.is-active { background: transparent; color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); }
+.fb-card[data-state="playing"] .fb-word.is-active .fb-syl.is-now,
+.fb-card[data-state="playing"] .fb-word.is-active.is-whole,
+.fb-card[data-state="playing"] .fb-word.is-active:not(:has(.fb-syl)) { background: var(--accent); color: var(--accent-ink); box-shadow: none; }
+
+.fb-ipaw, .fb-ipas { border-radius: 3px; transition: background-color 0.08s, color 0.08s; }
+.fb-card[data-state="playing"] .fb-ipa:has(.fb-ipaw) { color: var(--muted); }
+.fb-card[data-state="playing"] .fb-ipaw.is-done { color: var(--text); }
+.fb-card[data-state="playing"] .fb-ipaw.is-active { color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); }
+.fb-card[data-state="playing"] .fb-ipaw.is-active .fb-ipas.is-now,
+.fb-card[data-state="playing"] .fb-ipaw.is-active.is-whole,
+.fb-card[data-state="playing"] .fb-ipaw.is-active:not(:has(.fb-ipas)) { background: var(--accent); color: var(--accent-ink); box-shadow: none; }
+
 .fb-ipa-row { display: flex; align-items: center; gap: 4px; }
 .fb-card[data-show-ipa="false"] .fb-ipa-row { display: none; }
 .fb-ipa {

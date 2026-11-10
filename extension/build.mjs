@@ -34,7 +34,8 @@ const copies = [
   ['models/kokoro-v1.0.int8.onnx', 'kokoro-v1.0.int8.onnx'],
   ['models/kokoro-vocab.json', 'kokoro-vocab.json'],
   ['voices/voices.json', 'voices.json'],
-  ['ipa/ipa-en.json', 'ipa-en.json']
+  ['ipa/ipa-en.json', 'ipa-en.json'],
+  ['ipa/hyph-en.json', 'hyph-en.json']
 ];
 const voiceList = JSON.parse(fs.readFileSync(path.join(core, 'voices/voices.json'), 'utf8'));
 for (const v of voiceList) copies.push([`voices/${v.id}.bin`, `${v.id}.bin`]);

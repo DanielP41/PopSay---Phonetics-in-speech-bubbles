@@ -8,7 +8,7 @@ Los cambios de cada versión de PopSay. Las versiones siguen [SemVer](https://se
 - **El IPA coincide con la voz.** Cuando una palabra tiene más de una pronunciación (*read*, *live*, *record*, *the*), la burbuja muestra la que el motor dice en esa oración. Antes mostraba siempre la primera del diccionario: "I will read it" aparecía como /rɛd/.
 - Los números y las siglas ahora tienen transcripción ("2026", "$3.50", "9:30"), tomada de los mismos fonemas que usa la voz. Antes quedaban en blanco.
 - El diccionario IPA incluye las pronunciaciones alternativas de CMUdict (8.052 palabras con variantes).
-- Lo mismo en la extensión de Chrome/Edge, con casos de prueba compartidos entre Python y JavaScript.
+- **La extensión llega a la par de la app:** el IPA sigue a la voz y, mientras suena, se resalta la **sílaba** en el texto y en la transcripción (antes solo se resaltaba la palabra). Casos de prueba compartidos entre Python y JavaScript.
 
 ### Proyecto
 - Licencia MIT.

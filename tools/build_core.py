@@ -107,8 +107,26 @@ def build_ipa() -> None:
     print(f"IPA: {len(data) - 1} palabras, {len(alt)} con variantes → {path} ({path.stat().st_size / 1e6:.1f} MB)")
 
 
+def build_hyphenation() -> None:
+    """Patrones de separación en sílabas de Pyphen (en_US), para que la extensión corte igual que la app."""
+    path = CORE / "ipa" / "hyph-en.json"
+    try:
+        import pyphen
+    except ImportError:
+        if path.exists():
+            print(f"Sílabas: sin Pyphen instalado, queda el archivo que ya está en {path}")
+            return
+        raise
+    hd = pyphen.Pyphen(lang="en_US").hd
+    patterns = {tag: [start, "".join(str(v) for v in values)] for tag, (start, values) in sorted(hd.patterns.items())}
+    data = {"maxlen": hd.maxlen, "patterns": patterns}
+    path.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    print(f"Sílabas: {len(patterns)} patrones → {path} ({path.stat().st_size / 1e3:.0f} KB)")
+
+
 if __name__ == "__main__":
     fetch_models()
     build_voices()
     build_vocab()
     build_ipa()
+    build_hyphenation()

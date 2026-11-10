@@ -245,6 +245,18 @@ async function speak({ text, accent, rate }, sender) {
   return { ok: true, sessionId: session.id, engine: 'system', ...info };
 }
 
+let hyphDict = null;
+async function loadHyph() {
+  if (!hyphDict) {
+    try {
+      hyphDict = await (await fetch(chrome.runtime.getURL('models/hyph-en.json'))).json();
+    } catch {
+      hyphDict = { maxlen: 0, patterns: {} };
+    }
+  }
+  return hyphDict;
+}
+
 async function loadIpaDict() {
   if (!ipaDict) {
     const res = await fetch(chrome.runtime.getURL('models/ipa-en.json'));
@@ -266,7 +278,7 @@ async function ipaFollowingVoice(dict, clean, accent) {
     const shown = perWord.filter(Boolean);
     if (!shown.length) return { ipa: null };
     const unknown = shown.filter((p) => p.startsWith('‹')).map((p) => p.slice(1, -1));
-    return { ipa: shown.join(' '), source: 'local', approximate, unknown };
+    return { ipa: shown.join(' '), source: 'local', approximate, unknown, perWord: perWord.map((x) => (x && !x.startsWith('‹') ? x : null)) };
   } catch {
     return null; // sin motor: el diccionario solo
   }
@@ -329,6 +341,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       return { ok: true };
     },
     ipa: () => getIpa(msg),
+    hyph: () => loadHyph(),
     'open-options': async () => {
       await chrome.runtime.openOptionsPage();
       return { ok: true };

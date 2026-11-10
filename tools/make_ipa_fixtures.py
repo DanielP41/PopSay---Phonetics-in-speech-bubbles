@@ -45,6 +45,20 @@ def main() -> None:
     out.write_text(json.dumps(cases, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     print(f"{len(cases)} casos → {out}")
 
+    from popsay import syllables
+
+    words = sorted({w for t in SENTENCES for w in t.split()} | {
+        "your", "yesterday", "rhythm", "pronunciation", "every", "make", "bridge", "radar", "data", "gym", "my",
+        "well-known", "(approach)", "Schedule", "comfortable", "vegetable", "it's", "don't", "A", "I", "queue",
+        "beautiful", "language", "thoroughly", "squirrel", "world", "WebAssembly.", "-dash", "x", "123", "",
+    })
+    ipas = sorted({p for c in cases for p in c["expected"] if p} | {"əˈbaʊt", "kəkˈɔːroʊ", "ˌriˈækt", "tʃɝtʃ", "dʒʌdʒ"})
+    data = {"ortho": [[w, syllables.ortho(w)] for w in words],
+            "ipa": [[p, syllables.ipa(p), syllables.weights(syllables.ipa(p))] for p in ipas]}
+    out = ROOT / "core" / "tests" / "syllables.json"
+    out.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    print(f"{len(words)} palabras y {len(ipas)} transcripciones → {out}")
+
 
 if __name__ == "__main__":
     main()

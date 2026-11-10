@@ -141,3 +141,26 @@ test('IPA en contexto: elige la variante que suena y no confunde la clave intern
   assert.equal(FB.ipaDictWord(dict, '#alt', 'en-US'), null);
   assert.deepEqual(FB.ipaVariants(dict, 'read', 'en-US'), ['rɛd', 'rid']);
 });
+
+test('sílabas: mismos cortes que la app (Pyphen + reglas) en el texto y en el IPA', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const core = path.join(__dirname, '..', '..', 'core');
+  const hyph = JSON.parse(fs.readFileSync(path.join(core, 'ipa', 'hyph-en.json'), 'utf8'));
+  const cases = JSON.parse(fs.readFileSync(path.join(core, 'tests', 'syllables.json'), 'utf8'));
+  for (const [word, expected] of cases.ortho) assert.deepEqual(FB.sylOrtho(word, hyph), expected, `ortho ${word}`);
+  for (const [ipa, expected, weights] of cases.ipa) {
+    assert.deepEqual(FB.sylIpa(ipa), expected, `ipa ${ipa}`);
+    assert.deepEqual(FB.sylWeights(FB.sylIpa(ipa)), weights, `pesos ${ipa}`);
+  }
+});
+
+test('sílabas: qué resaltar según cuánto sonó la palabra', () => {
+  const d = FB.wordDetails(['pronunciation', 'your', '2026'], ['prəˌnʌnsɪˈeɪʃən', 'jʊr', null], null)
+  assert.equal(d[0].ipa.join(''), 'prəˌnʌnsɪˈeɪʃən');
+  assert.deepEqual(FB.sylState(d[0], 0), { j: 0, k: 0 });
+  assert.equal(FB.sylState(d[0], 0.99).j, d[0].ipa.length - 1);
+  assert.deepEqual(FB.sylState(d[1], 0.5), { j: -1, k: -1 }); // una sílaba: la palabra entera
+  assert.deepEqual(FB.sylState(d[2], 0.5), { j: -1, k: -1 });
+  assert.deepEqual(FB.sylState(d[0], undefined), { j: -1, k: -1 }); // voces sin avance dentro de la palabra
+});

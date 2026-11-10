@@ -25,7 +25,7 @@ def main():
     exe = sys.argv[1] if len(sys.argv) > 1 else None
     ok = False
     with sync_playwright() as p, tempfile.TemporaryDirectory() as prof:
-        ctx = p.chromium.launch_persistent_context(prof, executable_path=exe, headless=True, viewport={"width": 1100, "height": 700},
+        ctx = p.chromium.launch_persistent_context(prof, executable_path=exe, channel=None if exe else "chromium", headless=True, viewport={"width": 1100, "height": 700},
             args=["--headless=new", f"--disable-extensions-except={EXT}", f"--load-extension={EXT}", "--disable-features=DisableLoadExtensionCommandLineSwitch"])
         sw = ctx.service_workers[0] if ctx.service_workers else ctx.wait_for_event("serviceworker")
         ctx.pages[0].wait_for_timeout(800)

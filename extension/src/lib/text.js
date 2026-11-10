@@ -453,6 +453,198 @@
     return { perWord, approximate };
   }
 
+  // ---- Sílabas (misma lógica que desktop/popsay/syllables.py) ----
+
+  const SYL_DIPH = ['aɪ', 'aʊ', 'eɪ', 'oʊ', 'əʊ', 'ɔɪ', 'ɪə', 'eə', 'ʊə'];
+  const SYL_VOWELS = new Set('aeiouæɑɒɔəɚɛɜɝɪʊʌɐᵻy');
+  const SYL_ONSETS2 = new Set(['pl', 'pr', 'bl', 'br', 'tr', 'dr', 'kr', 'kl', 'ɡr', 'ɡl', 'fr', 'fl', 'θr', 'ʃr', 'sp', 'st', 'sk',
+    'sm', 'sn', 'sl', 'sw', 'tw', 'dw', 'kw', 'pj', 'bj', 'fj', 'vj', 'kj', 'mj', 'hj', 'ɡj', 'nj', 'lj']);
+
+  /** Posiciones de corte de una palabra según los patrones de Pyphen ({ maxlen, patterns }). */
+  function hyphenPositions(word, hyph, left, right) {
+    const pointed = `.${word.toLowerCase()}.`;
+    const refs = new Array(pointed.length + 1).fill(0);
+    for (let i = 0; i < pointed.length - 1; i++) {
+      const stop = Math.min(i + hyph.maxlen, pointed.length) + 1;
+      for (let j = i + 1; j < stop; j++) {
+        const pat = hyph.patterns[pointed.slice(i, j)];
+        if (!pat) continue;
+        const [offset, values] = pat;
+        for (let k = 0; k < values.length; k++) {
+          const at = i + offset + k;
+          if (at < refs.length) refs[at] = Math.max(refs[at], values.charCodeAt(k) - 48);
+        }
+      }
+    }
+    const out = [];
+    refs.forEach((r, i) => { if (r % 2 && i - 1 >= left && i - 1 <= word.length - right) out.push(i - 1); });
+    return out;
+  }
+
+  function sylHeuristic(word) {
+    let groups = [...word.matchAll(/[aeiouy]+/gi)].map((m) => [m.index, m.index + m[0].length]);
+    if (groups.length <= 1) return [word];
+    if (word.toLowerCase().endsWith('e') && groups[groups.length - 1][0] === word.length - 1) groups = groups.slice(0, -1);
+    const cuts = [];
+    for (let g = 0; g + 1 < groups.length; g++) {
+      const aEnd = groups[g][1], bStart = groups[g + 1][0];
+      cuts.push(bStart - aEnd <= 1 ? aEnd : bStart - 1);
+    }
+    const pieces = [];
+    let prev = 0;
+    for (const c of cuts) { pieces.push(word.slice(prev, c)); prev = c; }
+    pieces.push(word.slice(prev));
+    const kept = pieces.filter(Boolean);
+    return kept.length ? kept : [word];
+  }
+
+  const sylHasVowel = (piece) => /[aeiou]/i.test(piece) || /(?<!^)y/i.test(piece);
+
+  function sylMergeVoiceless(pieces) {
+    const out = [];
+    for (const s of pieces) {
+      if (out.length && (!sylHasVowel(out[out.length - 1]) || !sylHasVowel(s))) out[out.length - 1] += s;
+      else out.push(s);
+    }
+    return out;
+  }
+
+  /** Sílabas de una palabra escrita; unidas devuelven exactamente la palabra (con su puntuación). */
+  function sylOrtho(word, hyph) {
+    const m = /^([^A-Za-z]*)(.*?)([^A-Za-z]*)$/s.exec(word);
+    const [lead, core, tail] = m ? [m[1], m[2], m[3]] : ['', word, ''];
+    if (!core) return [word];
+    const out = [];
+    core.split('-').forEach((piece, i) => {
+      if (!piece) return;
+      let sy;
+      if (hyph) {
+        sy = [];
+        let prev = 0;
+        for (const pos of hyphenPositions(piece, hyph, 1, 2)) { sy.push(piece.slice(prev, pos)); prev = pos; }
+        sy.push(piece.slice(prev));
+      } else sy = sylHeuristic(piece);
+      sy = sylMergeVoiceless(sy.filter(Boolean));
+      if (!sy.length) sy = [piece];
+      if (sy.length === 1) sy = sylHeuristic(piece);
+      if (i > 0 || core.startsWith('-')) out.push('-');
+      out.push(...sy);
+    });
+    const merged = [];
+    for (const s of out) {
+      if (s === '-' && merged.length) merged[merged.length - 1] += '-';
+      else merged.push(s);
+    }
+    if (!merged.length) return [word];
+    merged[0] = lead + merged[0];
+    merged[merged.length - 1] += tail;
+    return merged.join('') === word ? merged : [word];
+  }
+
+  /** Separa el IPA en unidades [texto, tipo]: 'V' vocal/diptongo, 'C' consonante, 'S' acento. */
+  function sylUnits(ipa) {
+    const out = [];
+    let i = 0;
+    while (i < ipa.length) {
+      const two = ipa.slice(i, i + 2);
+      let u, kind;
+      if (SYL_DIPH.includes(two)) { u = two; kind = 'V'; i += 2; }
+      else if ('ˈˌ'.includes(ipa[i])) { u = ipa[i]; kind = 'S'; i += 1; }
+      else if (SYL_VOWELS.has(ipa[i])) { u = ipa[i]; kind = 'V'; i += 1; }
+      else {
+        u = ipa[i]; kind = 'C'; i += 1;
+        if ((ipa[i] === 'ʃ' && u === 't') || (ipa[i] === 'ʒ' && u === 'd')) { u += ipa[i]; i += 1; }
+      }
+      while (i < ipa.length && 'ːˑ̃'.includes(ipa[i])) { u += ipa[i]; i += 1; }
+      out.push([u, kind]);
+    }
+    return out;
+  }
+
+  /** Sílabas de la transcripción de UNA palabra (unidas devuelven el texto original). */
+  function sylIpa(wordIpa) {
+    if (wordIpa.trim().includes(' ')) {
+      const out = [];
+      for (const part of wordIpa.match(/\S+\s*|^\s+/g) || []) {
+        const body = part.trimEnd();
+        if (body.trim()) out.push(...sylIpa(body));
+        else out.push(part);
+        if (body.trim()) out[out.length - 1] += part.slice(body.length);
+      }
+      return out;
+    }
+    const units = sylUnits(wordIpa);
+    const nuclei = [];
+    units.forEach(([, t], k) => { if (t === 'V') nuclei.push(k); });
+    if (nuclei.length <= 1) return [wordIpa];
+    const starts = [0];
+    for (let n = 0; n + 1 < nuclei.length; n++) {
+      const a = nuclei[n], b = nuclei[n + 1];
+      const stress = [], cons = [];
+      for (let k = a + 1; k < b; k++) {
+        if (units[k][1] === 'S') stress.push(k);
+        else if (units[k][1] === 'C') cons.push(k);
+      }
+      if (stress.length && !(cons.length && stress[0] === b - 1)) { starts.push(stress[0]); continue; }
+      if (!cons.length) starts.push(b);
+      else if (cons.length === 1) starts.push(cons[0]);
+      else {
+        const pair = units[cons[cons.length - 2]][0] + units[cons[cons.length - 1]][0];
+        starts.push(SYL_ONSETS2.has(pair) ? cons[cons.length - 2] : cons[cons.length - 1]);
+      }
+    }
+    starts.push(units.length);
+    const out = [];
+    for (let k = 0; k + 1 < starts.length; k++) {
+      if (starts[k + 1] > starts[k]) out.push(units.slice(starts[k], starts[k + 1]).map(([u]) => u).join(''));
+    }
+    return out;
+  }
+
+  /** Peso de cada sílaba IPA (cantidad de sonidos) para repartir el tiempo de la palabra. */
+  function sylWeights(ipaSyllables) {
+    return ipaSyllables.map((s) => Math.max(1, sylUnits(s).filter(([, t]) => t !== 'S').length));
+  }
+
+  /** Índice de la sílaba IPA que suena en `fraction` (0..1) de la palabra. */
+  function sylActive(fraction, weights) {
+    const total = weights.reduce((a, b) => a + b, 0);
+    let acc = 0;
+    for (let k = 0; k < weights.length; k++) {
+      acc += weights[k];
+      if (fraction < acc / total) return k;
+    }
+    return weights.length - 1;
+  }
+
+  function sylMapIndex(k, nFrom, nTo) {
+    if (nFrom <= 1 || nTo <= 1) return nTo <= 1 ? 0 : Math.min(nTo - 1, k);
+    return Math.min(nTo - 1, Math.floor((k * nTo) / nFrom));
+  }
+
+  /**
+   * Para la palabra que suena: qué sílaba resaltar en el IPA (j) y en el texto (k); -1 = la palabra entera.
+   * detail = { ipa: sílabas IPA | null, w: pesos, ortho: sílabas escritas }, frac = cuánto de la palabra ya sonó.
+   */
+  function sylState(detail, frac) {
+    if (!detail || frac === null || frac === undefined) return { j: -1, k: -1 };
+    const ortho = detail.ortho || [];
+    if (detail.ipa && detail.ipa.length) {
+      if (detail.ipa.length === 1) return { j: -1, k: -1 };
+      const j = sylActive(frac, detail.w);
+      return { j, k: ortho.length > 1 ? sylMapIndex(j, detail.ipa.length, ortho.length) : -1 };
+    }
+    return { j: -1, k: ortho.length > 1 ? Math.min(ortho.length - 1, Math.floor(frac * ortho.length)) : -1 };
+  }
+
+  /** Lo que la burbuja necesita de cada palabra para resaltar por sílabas, en el texto y en el IPA. */
+  function wordDetails(words, perWord, hyph) {
+    return words.map((word, i) => {
+      const ipa = perWord[i] ? sylIpa(perWord[i]) : null;
+      return { ipa, w: ipa ? sylWeights(ipa) : null, ortho: sylOrtho(word, hyph) };
+    });
+  }
+
   function hostIsDisabled(hostname, list) {
     const host = String(hostname || '').toLowerCase();
     return (list || []).some((entry) => {
@@ -487,6 +679,13 @@
     ipaVariants,
     ipaCleanEspeak,
     ipaInContext,
+    sylOrtho,
+    sylIpa,
+    sylWeights,
+    sylActive,
+    sylMapIndex,
+    sylState,
+    wordDetails,
     hostIsDisabled,
     cacheKey
   };

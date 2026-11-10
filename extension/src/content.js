@@ -24,6 +24,7 @@
   let ui = null;           // referencias a nodos de la burbuja abierta
   let trigger = null;      // botoncito del modo "icon"
   let pendingSelection = null;
+  let hyphCache = null;
 
   // Estado de reproducción de la burbuja abierta
   const play = {
@@ -232,6 +233,9 @@
     play.text = text;
     play.words = FB.splitWords(text);
     play.timeline = FB.buildWordTimeline(play.words);
+    play.perWord = null;
+    play.details = null;
+    play.cur = { index: -1, j: -2, k: -2 };
     play.state = 'idle';
     play.sessionId = null;
     play.awaiting = false;
@@ -330,6 +334,7 @@
     position();
     if (truncated) setNotice(`Texto recortado a ${settings.maxChars} caracteres.`);
     if (!FB.isLikelyEnglish(text)) setNotice('No parece texto en inglés; la pronunciación puede sonar rara.');
+    loadHyph();
     loadIpa();
     if (opts.autoPlay || settings.autoPlay) startPlayback();
     else playBtn.focus({ preventScroll: true });
@@ -455,6 +460,55 @@
     noticeTimer = setTimeout(() => setNotice(''), 1800);
   }
 
+
+  async function loadHyph() {
+    if (!hyphCache) {
+      try {
+        const r = await chrome.runtime.sendMessage({ type: 'hyph' });
+        hyphCache = r && r.patterns ? r : { maxlen: 0, patterns: {} };
+      } catch {
+        hyphCache = { maxlen: 0, patterns: {} };
+      }
+    }
+    if (ui) refreshDetails();
+  }
+
+  const mk = (cls, text) => { const e = document.createElement('span'); e.className = cls; e.textContent = text; return e; };
+
+  /** Reparte cada palabra en sílabas (texto) y arma la transcripción palabra por palabra (IPA). */
+  function refreshDetails() {
+    if (!ui || !hyphCache) return;
+    const perWord = play.perWord || play.words.map(() => null);
+    play.details = FB.wordDetails(play.words.map((w) => w.word), perWord, hyphCache);
+    play.details.forEach((d, i) => {
+      const el = ui.wordEls[i];
+      el.textContent = '';
+      if (d.ortho.length > 1) d.ortho.forEach((t) => el.append(mk('fb-syl', t)));
+      else el.textContent = play.words[i].word;
+    });
+    ui.sylEls = ui.wordEls.map((el) => Array.from(el.children));
+    ui.ipaWordEls = null;
+    if (play.perWord && ui.ipaEl.dataset.value) {
+      ui.ipaEl.textContent = '';
+      ui.ipaEl.append('/');
+      ui.ipaWordEls = [];
+      let first = true;
+      play.details.forEach((d, i) => {
+        if (!play.perWord[i]) { ui.ipaWordEls[i] = null; return; }
+        if (!first) ui.ipaEl.append(' ');
+        first = false;
+        const w = mk('fb-ipaw', '');
+        if (d.ipa && d.ipa.length > 1) d.ipa.forEach((t) => w.append(mk('fb-ipas', t)));
+        else w.textContent = play.perWord[i];
+        ui.ipaEl.append(w);
+        ui.ipaWordEls[i] = w;
+      });
+      ui.ipaEl.append('/' + (play.ipaApprox ? '  ≈' : ''));
+    }
+    play.cur = { index: -1, j: -2, k: -2 };
+    if (play.state === 'playing' && play.last) highlight(play.last.index, play.last.frac);
+  }
+
   async function loadIpa() {
     if (!ui || !settings.showIpa) return;
     const myText = play.text;
@@ -471,10 +525,13 @@
     if (!ui || play.text !== myText || settings.accent !== myAccent) return;
     if (res && res.ipa) {
       const value = `/${res.ipa}/`;
-      ui.ipaEl.textContent = value + (res.approximate ? '  ≈' : '');
+      play.perWord = Array.isArray(res.perWord) && res.perWord.length === play.words.length ? res.perWord : null;
+      play.ipaApprox = !!res.approximate;
       ui.ipaEl.title = res.approximate ? 'Transcripción aproximada (generada por reglas)' : res.source === 'dictionary' ? 'Fuente: Free Dictionary API' : 'Fuente: backend';
       ui.ipaEl.dataset.value = value;
       ui.ipaEl.classList.remove('is-muted');
+      ui.ipaEl.textContent = value + (res.approximate ? '  ≈' : '');
+      refreshDetails();
     } else {
       ui.ipaEl.textContent = 'Sin transcripción disponible';
       ui.ipaEl.title = '';
@@ -533,22 +590,61 @@
 
   function clearHighlight() {
     if (!ui) return;
-    for (const el of ui.wordEls) el.classList.remove('is-active', 'is-done');
+    play.last = null;
+    for (const el of ui.wordEls) el.classList.remove('is-active', 'is-done', 'is-whole');
+    for (const list of ui.sylEls || []) for (const e of list) e.classList.remove('is-now');
+    for (const w of ui.ipaWordEls || []) if (w) { w.classList.remove('is-active', 'is-done', 'is-whole'); for (const e of w.children) e.classList.remove('is-now'); }
+    play.cur = { index: -1, j: -2, k: -2 };
     setProgress(0);
   }
 
-  function highlight(index) {
+  /** index = palabra que suena; frac = cuánto de ella ya sonó (0..1) o null si no se sabe. */
+  function highlight(index, frac = null) {
     if (!ui) return;
-    ui.wordEls.forEach((el, i) => {
-      el.classList.toggle('is-active', i === index);
-      el.classList.toggle('is-done', i < index);
-    });
-    const t = ui.text;
-    const el = ui.wordEls[index];
-    if (el && t.scrollHeight > t.clientHeight) {
-      const top = el.offsetTop;
-      if (top < t.scrollTop || top + el.offsetHeight > t.scrollTop + t.clientHeight) t.scrollTop = Math.max(0, top - t.clientHeight / 3);
+    play.last = { index, frac };
+    const d = play.details && play.details[index];
+    const { j, k } = FB.sylState(d, frac);
+    const cur = play.cur;
+    if (cur.index !== index) {
+      ui.wordEls.forEach((el, i) => {
+        el.classList.toggle('is-active', i === index);
+        el.classList.toggle('is-done', i < index);
+      });
+      (ui.ipaWordEls || []).forEach((w, i) => {
+        if (!w) return;
+        w.classList.toggle('is-active', i === index);
+        w.classList.toggle('is-done', i < index);
+      });
+      for (const list of ui.sylEls || []) for (const e of list) e.classList.remove('is-now');
+      for (const w of ui.ipaWordEls || []) if (w) for (const e of w.children) e.classList.remove('is-now');
+      cur.k = cur.j = -2;
+      const t = ui.text;
+      const el = ui.wordEls[index];
+      if (el && t.scrollHeight > t.clientHeight) {
+        const top = el.offsetTop;
+        if (top < t.scrollTop || top + el.offsetHeight > t.scrollTop + t.clientHeight) t.scrollTop = Math.max(0, top - t.clientHeight / 3);
+      }
+      cur.index = index;
     }
+    if (cur.k !== k) {
+      const list = (ui.sylEls || [])[index] || [];
+      list.forEach((e, n) => e.classList.toggle('is-now', n === k));
+      ui.wordEls[index].classList.toggle('is-whole', k < 0);
+      cur.k = k;
+    }
+    if (cur.j !== j) {
+      const w = (ui.ipaWordEls || [])[index];
+      if (w) {
+        Array.from(w.children).forEach((e, n) => e.classList.toggle('is-now', n === j));
+        w.classList.toggle('is-whole', j < 0);
+      }
+      cur.j = j;
+    }
+  }
+
+  function fracIn(timeline, i, p) {
+    const e = timeline[i];
+    return e && e.to > e.from ? Math.max(0, Math.min(1, (p - e.from) / (e.to - e.from))) : null;
   }
 
   function setProgress(p) {
@@ -574,7 +670,7 @@
       const p = Math.min(0.98, (performance.now() - est.startedAt) / 1000 / est.duration);
       const local = FB.wordIndexAtProgress(est.timeline, p);
       const global = est.words[local].i;
-      highlight(global);
+      highlight(global, fracIn(est.timeline, local, p));
       setProgress((est.words[0].i + p * est.words.length) / Math.max(1, play.words.length));
       play.raf = requestAnimationFrame(tick);
     };
@@ -621,7 +717,8 @@
           syncControls();
         }
         const p = msg.progress || 0;
-        highlight(FB.wordIndexAtProgress(play.timeline, p));
+        const wi = FB.wordIndexAtProgress(play.timeline, p);
+        highlight(wi, fracIn(play.timeline, wi, p));
         setProgress(p);
         break;
       }

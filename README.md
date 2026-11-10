@@ -22,6 +22,7 @@ There are two ways to use it, and both share the same core:
 | Installation | None: unzip and open `PopSay.exe` (runs from a USB drive) | Load the folder or the zip |
 | How to trigger it | `Alt+Shift+P` on a selection, or the small blue icon that appears when you select with the mouse | Select text, press `Alt+Shift+P`, or right-click › *Pronunciar* |
 | Engine | Kokoro fp32 on ONNX Runtime (native CPU) | Kokoro int8 on ONNX Runtime Web (multithreaded WebAssembly) |
+| Highlighting | Word + syllable, in text and IPA | Word + syllable, in text and IPA |
 | Size | ~385 MB zipped | ~73 MB |
 
 ```

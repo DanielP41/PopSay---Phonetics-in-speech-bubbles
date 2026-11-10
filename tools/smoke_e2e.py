@@ -117,6 +117,7 @@ def main():
         page.mouse.click(cx, cy)
 
         states, playing_at, shot_taken = [], None, False
+        lit = {"syl": 0, "ipa": 0, "words": 0}
         while time.monotonic() - t0 < 90:
             card = find_nodes(cdp, "fb-card")
             st = card[0][1].get("data-state") if card else "closed"
@@ -127,6 +128,10 @@ def main():
             if st == "playing" and not shot_taken and time.monotonic() - t0 > (playing_at or 0) + 0.6:
                 page.screenshot(path=str(OUT / "smoke_playing.png"))
                 shot_taken = True
+            if st == "playing":
+                lit["syl"] = max(lit["syl"], len(find_nodes(cdp, "fb-syl")))
+                lit["ipa"] = max(lit["ipa"], len(find_nodes(cdp, "fb-ipaw")))
+                lit["words"] = max(lit["words"], len([n for n in find_nodes(cdp, "fb-word") if "is-active" in n[1].get("class", "")]))
             if playing_at is not None and st == "idle":
                 break
             page.wait_for_timeout(150)
@@ -136,9 +141,10 @@ def main():
         notice = find_nodes(cdp, "fb-notice")
         print("estados:", states)
         print("IPA:", ipa_text)
+        print("sílabas en el texto:", lit["syl"], "· palabras IPA:", lit["ipa"], "· palabra activa vista:", lit["words"])
         print("aviso:", text_of(notice[0][0]) if notice else "")
         page.screenshot(path=str(OUT / "smoke.png"))
-        ok = playing_at is not None and states[-1][1] == "idle" and "ˈ" in ipa_text
+        ok = playing_at is not None and states[-1][1] == "idle" and "ˈ" in ipa_text and lit["syl"] > 0 and lit["ipa"] > 0 and lit["words"] > 0
         ctx.close()
     srv.shutdown()
     print("OK" if ok else "FALLÓ")
